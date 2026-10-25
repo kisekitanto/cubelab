@@ -90,7 +90,7 @@ if(ED.i==-2){if(v==id)delete UO[id];else UO[id]=v;ls.set("cl_uo",UO);setMain(id,
 else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[ED.i]=v;ls.set("cl_ua",UX)}
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
-const IC={timer:"⏱",scr:"🔀",learn:"🎓",cfop:"🧩",roux:"🧱",zz:"⚡",trainer:"🎯"};
+const IC={timer:"⏱",scr:"🔀",learn:"🎓",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",trainer:"🎯"};
 function scInfo(){const u=$("#su");if(!u)return;const r=times.filter(x=>x.s==T.scr).map(x=>x.t);u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:"new scramble";const b=$("#sv");if(b)b.textContent=PIN.includes(T.scr)?"★ Saved":"☆ Save"}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
@@ -157,13 +157,13 @@ const ALL=[];for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>A
 const inv=a=>a.split(" ").reverse().map(x=>x.endsWith("'")?x.slice(0,-1):x.endsWith("2")?x:x+"'").join(" ");
 
 /* ---------- STATE ---------- */
-const TABS=[["timer","Timer"],["scr","Scrambles"],["learn","Beginner method"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
+const TABS=[["timer","Timer"],["scr","Scrambles"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
 let tab="timer",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.get("cl_w",{}),T={s:"idle",t0:0,hold:0,scr:""};
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);if(T.s=="run")T.s="idle";tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,scr:vScr,learn:vLearn2,timer:vTimer,trainer:vTrainer})[tab]();if(MT[tab])fill();if(tab=="learn")PR=cube3d($("#pc"),cube());if(tab=="timer"){newScr();stats()}if(tab=="trainer")nextCase()}
+function render(){$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,scr:vScr,learn:vLearn2,bld:vBld,timer:vTimer,trainer:vTrainer})[tab]();if(MT[tab])fill();if(tab=="learn")PR=cube3d($("#pc"),cube());if(tab=="timer"){newScr();stats()}if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -198,12 +198,57 @@ ${TR.rev?`<p class="mu" style="margin-top:12px">Solution — ${c.t}</p>${chip(c.
 function trTick(){if(TR.run){const e=$("#trt");if(e)e.textContent=fmt(performance.now()-TR.t0);requestAnimationFrame(trTick)}}
 function trAns(good){const k=TR.cur.k;TR.n++;if(good){TR.ok++;W[k]=Math.max(1,(W[k]||1)-1)}else W[k]=(W[k]||1)+2;ls.set("cl_w",W);nextCase()}
 
+/* ---------- BLINDFOLD (Old Pochmann) ---------- */
+// T-perm swaps the UR and UL edges, Y-perm swaps the UBL and UFR corners, BP fixes parity.
+// Setup moves (BES edges / BCS corners) were found by a program and checked on 1,500 random scrambles. Edit freely.
+const BT="R U R' U' R' F R2 U' R' U' R U R' F'",BY="F R U' R' U' R U R' F' R U R' U' R' F R F'",BP="R U' R' U' R U R D R' U' R D' R' U2 R' U'";
+const BES={A:"R2 U' R2",C:"R2 U R2",D:"",E:"U B U' L",F:"U' F U",G:"F' D F L'",H:"U B' U'",I:"R F' R' L'",J:"U2 R U2",K:"F L' F'",L:"L'",N:"U B U'",O:"F' D' F L'",P:"U' F' U",Q:"R' B R L",R:"L",S:"B' L B",T:"U2 R' U2",U:"D' L2",V:"D2 L2",W:"D L2",X:"L2"};
+const BCS={B:"R D' F'",C:"",D:"F R' F'",F:"F",G:"D R",H:"D2 F'",I:"F2 R",J:"F R",K:"R",L:"F' R",M:"R' F'",N:"R2 F'",O:"R F'",P:"F'",Q:"R'",S:"D2 R",T:"D' F'",U:"F2",V:"D R2",W:"R2",X:"D F2"};
+const FNm={U:[0,1,0],L:[-1,0,0],F:[0,0,1],R:[1,0,0],B:[0,0,-1],D:[0,-1,0]};
+const BCP={U:[[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]],L:[[-1,1,-1],[-1,1,1],[-1,-1,1],[-1,-1,-1]],F:[[-1,1,1],[1,1,1],[1,-1,1],[-1,-1,1]],R:[[1,1,1],[1,1,-1],[1,-1,-1],[1,-1,1]],B:[[1,1,-1],[-1,1,-1],[-1,-1,-1],[1,-1,-1]],D:[[-1,-1,1],[1,-1,1],[1,-1,-1],[-1,-1,-1]]};
+const BEP={U:[[0,1,-1],[1,1,0],[0,1,1],[-1,1,0]],L:[[-1,1,0],[-1,0,1],[-1,-1,0],[-1,0,-1]],F:[[0,1,1],[1,0,1],[0,-1,1],[-1,0,1]],R:[[1,1,0],[1,0,-1],[1,-1,0],[1,0,1]],B:[[0,1,-1],[-1,0,-1],[0,-1,-1],[1,0,-1]],D:[[0,-1,1],[1,-1,0],[0,-1,-1],[-1,-1,0]]};
+const CK={},EK={},CL={},EL={};
+"ULFRBD".split("").forEach((f,i)=>{for(let j=0;j<4;j++){const l="ABCDEFGHIJKLMNOPQRSTUVWX"[i*4+j];CK[l]=BCP[f][j]+"|"+FNm[f];EK[l]=BEP[f][j]+"|"+FNm[f];CL[CK[l]]=l;EL[EK[l]]=l}});
+let BL={sc:"",r:null,show:"",net:"e"};
+// Solve a scramble "blindfolded" on the virtual cube: returns the memo letters and every shot.
+function bld(sc){const S=cube(),key=s=>s.p.join()+"|"+s.n.join(),hk=s=>s.o.join()+"|"+FNm[s.c],at=k=>S.find(s=>key(s)==k),run=a=>a.split(" ").filter(x=>x).forEach(t=>mv(S,t)),out={e:[],c:[],par:0,sh:[]};
+sc.split(" ").forEach(t=>mv(S,t));
+const ph=(K,LL,tab,buf,alg,bc,kind,arr)=>{for(let g=0;g<60;g++){let L=LL[hk(at(K[buf]))];if(bc.includes(L)){L=Object.keys(K).find(k=>!bc.includes(k)&&hk(at(K[k]))!=K[k]);if(!L)return}
+const su=tab[L],m=(su?su+" ":"")+alg+(su?" "+inv(su):"");arr.push(L);out.sh.push({k:kind,L,m});run(m)}};
+ph(EK,EL,BES,"B",BT,"BM","e",out.e);if(out.e.length%2){out.par=1;out.sh.push({k:"p",L:"",m:BP});run(BP)}
+ph(CK,CL,BCS,"A",BY,"AER","c",out.c);out.ok=S.every(s=>s.p.join()==s.o.join()&&s.n.join()==FNm[s.c].join());return out}
+function bnet(k){const Kk=k=="e"?EK:CK,off={U:[3,0],L:[0,3],F:[3,3],R:[6,3],B:[9,3],D:[3,6]},col={U:"#ffffff",D:"#f5c518",F:"#22a55a",B:"#2f6df0",R:"#e03a3a",L:"#f58220"},bf=k=="e"?"BM":"AER";let o="";
+for(const f in off)for(let r=0;r<3;r++)for(let c=0;c<3;c++)o+=`<rect x="${(off[f][0]+c)*24+2}" y="${(off[f][1]+r)*24+2}" width="22" height="22" rx="4" fill="${col[f]}" stroke="#16161a"/>`;
+for(const L in Kk){const[ps,ns]=Kk[L].split("|"),p=ps.split(",").map(Number),f=Object.keys(FNm).find(q=>FNm[q].join()==ns),[ox,oy]=off[f];let c,r;
+if(f=="U"){c=p[0]+1;r=p[2]+1}else if(f=="F"){c=p[0]+1;r=1-p[1]}else if(f=="R"){c=1-p[2];r=1-p[1]}else if(f=="B"){c=1-p[0];r=1-p[1]}else if(f=="L"){c=p[2]+1;r=1-p[1]}else{c=p[0]+1;r=1-p[2]}
+o+=`<text x="${(ox+c)*24+13}" y="${(oy+r)*24+18}" text-anchor="middle" font-size="13" font-weight="700" fill="${bf.includes(L)?"#d11":"#16161a"}">${L}</text>`}
+return `<svg viewBox="0 0 292 220" style="width:100%;max-width:440px;display:block;margin:8px auto" role="img" aria-label="Cube net with Speffz letters">${o}</svg>`}
+const stab=t=>`<div class="stg">`+Object.keys(t).map(L=>`<div><b>${L}</b> <code>${t[L]||"none"}</code></div>`).join("")+`</div>`;
+const pairs=a=>a.length?a.join("").match(/.{1,2}/g).join(" "):"(none)";
+function vBld(){const r=BL.r,bt=(a,k,l)=>`<button class="mb" data-b="${a}" data-k="${k}">${l}</button>`;
+return `<div class="card"><h2>🙈 Blindfolded solving (3BLD)</h2><p>You solve the whole cube without looking. It has two phases: <b>memorize</b> where every piece has to go (cube in your hands, eyes open), then <b>put on the blindfold</b> and solve it from that memory.</p><p>This page teaches <b>Old Pochmann</b>, the classic beginner method. You only need <b>two algorithms</b> (T-perm and Y-perm), one parity algorithm, and a small “setup move” for each letter. Speed comes later; the goal is a clean solve.</p><p class="mu">Before you start: you should already know how to solve the cube normally (see Beginner method) and have the T-perm and Y-perm under your fingers (see PLL on the CFOP page).</p></div>
+<div class="card"><h3>Step 1 · Hold it the same way every time</h3><p>White on top, green in front. This is also how scrambles on the Timer page are meant to be applied. Never rotate the whole cube while solving blind: every letter below assumes this orientation.</p></div>
+<div class="card"><h3>Step 2 · Learn the letters</h3><p>Every sticker (not the centers) gets a letter, A to X. Edges and corners use the same letters, face by face: Up A–D, Left E–H, Front I–L, Right M–P, Back Q–T, Down U–X, always clockwise starting at the top-left of each face. Switch the picture below to see the corner letters or the edge letters.</p><div class="row tb">${bt("ne","","Edge letters")}${bt("nc","","Corner letters")}</div>${bnet(BL.net)}<p class="mu">Red letters are the <b>buffer</b>: edge buffer = the UR edge (B and M), corner buffer = the UBL corner (A, E, R). Those letters never appear in your memo.</p></div>
+<div class="card"><h3>Step 3 · How one piece is “shot” into place</h3><p>The buffer is the piece you always start from. Take the sticker in the buffer and ask: <b>where does this sticker belong?</b> The letter of that spot is your target. Example: the top sticker of the buffer edge is the <i>green</i> half of the white-green edge. Green belongs on the front face, top edge, so the letter is <b>I</b>.</p><p>To send it there: 1) <b>setup move(s)</b> bring the target spot to the swap position, 2) do the algorithm, which swaps the buffer with the swap position, 3) <b>undo the setup moves</b>. The piece that was sitting in the target is now in the buffer, so you read it and repeat.</p><div class="ar"><span class="mu">Edges swap UR ↔ UL (T-perm), corners swap UBL ↔ UFR (Y-perm)</span></div>${[["T","T-perm (edges)",BT],["Y","Y-perm (corners)",BY],["P","Parity algorithm (Ra-perm + U′)",BP]].map(([k,n,a])=>`<div class="ar"><b>${n}</b>${chip(a)}${bt("a",k,"▶ Watch")}</div>`).join("")}</div>
+<div class="card"><h3>Step 4 · Memorize</h3><p>Do edges first, then corners. For each, write down (in your head) the letters you get by following the pieces:</p><ol><li>Read the buffer sticker, find where it belongs, that letter is your first target.</li><li>Look at the sticker that is <i>currently in that target spot</i>. Where does it belong? That is the next letter.</li><li>Keep going until the sticker you are reading belongs in the buffer piece itself (B or M for edges, A, E or R for corners). That cycle is finished.</li><li><b>Cycle break:</b> if pieces are still unsolved, pick any unsolved piece, use its letter as the next letter, and keep following from there. When the buffer piece is already correct, start with a cycle break as well.</li></ol><p>A piece that is in the right place but twisted or flipped shows up as 2 letters (or 3 for a corner), that is normal. If the sticker in the buffer belongs on the <i>other</i> sticker spots of the buffer piece (M for edges, E/R for corners), treat it like a cycle break.</p><p>Then <b>memorize the letters in pairs</b> (AB CD …) and turn each pair into a word or a picture. Chain the pictures along a route you know well (your room, your way to school). Practice just edges first.</p></div>
+<div class="card"><h3>Step 5 · Solve it blindfolded</h3><ol><li>Put the blindfold on. Do <b>every edge letter</b> in order: setup, T-perm, undo.</li><li><b>Parity:</b> if you had an <b>odd number of edge letters</b>, do the parity algorithm now (you will also have an odd number of corner letters).</li><li>Do <b>every corner letter</b> in order: setup, Y-perm, undo.</li><li>Take the blindfold off and enjoy!</li></ol><p class="mu">If you forget a letter, stop and think; moving the cube randomly cannot fix it. Beginners often need 5–10 minutes, that is fine.</p></div>
+<div class="card"><h3>Practice with a scramble</h3><p class="mu">Press “New scramble”, apply it to your cube (white up, green front), then press “Show memo” to compare with your own letters. This tool follows exactly the rules above and checks the result on a virtual cube.</p><div class="row tb">${bt("new","","🔀 New scramble")}${bt("memo","","🧠 Show memo")}${bt("exec","","🛠 Show execution")}</div>${BL.sc?`<code class="alg" data-c="${BL.sc}" style="margin-top:10px">${BL.sc}</code>`:""}${r?`<div class="card" style="margin-top:10px"><p><b>Edges</b> (${r.e.length} letters): <code>${pairs(r.e)}</code></p><p><b>Corners</b> (${r.c.length} letters): <code>${pairs(r.c)}</code></p><p>Parity: <b>${r.par?"yes, do the parity algorithm between edges and corners":"no"}</b>. Virtual cube solved: <b class="${r.ok?"ok":"bad"}">${r.ok?"✓":"✗"}</b></p>${BL.show=="exec"?r.sh.map((x,i)=>`<div class="ar"><b>${x.k=="p"?"Parity":(x.k=="e"?"Edge ":"Corner ")+x.L}</b> ${chip(x.m)}${bt("s",i,"▶ Watch")}</div>`).join(""):""}</div>`:""}</div>
+<details class="card"><summary>Setup moves for edges (T-perm)</summary><p class="mu">Setup, then T-perm, then undo the setup (reverse the moves and flip each direction). “none” means no setup. Never aim at B or M.</p>${stab(BES)}</details>
+<details class="card"><summary>Setup moves for corners (Y-perm)</summary><p class="mu">Same idea with the Y-perm. Never aim at A, E or R.</p>${stab(BCS)}</details>
+<div class="card"><h3>Tips and things to know</h3><ul><li>The setup moves here only use moves that keep the buffer pieces, and the pieces the algorithms also swap, where they are. That is why memorizing from the starting cube works.</li><li>Shorter setup moves exist in other tutorials. If you like theirs better, just change the tables in <code>app.js</code>.</li><li>Later methods: M2 (faster edges), 3-style (commutators for 3-cycles), and memory palaces for longer memos. The letters you learned here carry over.</li><li>Practice “memo only” first: memorize, then check yourself with the tool above.</li></ul></div>`}
+function bAct(t){const b=t.dataset.b,k=t.dataset.k;
+if(b=="new"){BL.sc=scr(20);BL.r=null;BL.show="";return render()}
+if(b=="memo"||b=="exec"){if(!BL.sc)BL.sc=scr(20);BL.r=bld(BL.sc);BL.show=b;return render()}
+if(b=="ne"||b=="nc"){BL.net=b[1];return render()}
+if(b=="a"){const a={T:BT,Y:BY,P:BP}[k];return watch(a,stOf(inv(a)),{T:"T-perm (edges)",Y:"Y-perm (corners)",P:"Parity algorithm"}[k])}
+if(b=="s"){const x=BL.r.sh[+k];watch(x.m,stOf(inv(x.m)),x.k=="p"?"Parity":(x.k=="e"?"Edge ":"Corner ")+x.L)}}
+
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],#ns,#dl,#ca,#cb,#rp,#sv");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],#ns,#dl,#ca,#cb,#rp,#sv");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
-if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
+if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
 if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}

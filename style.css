@@ -62,3 +62,6 @@ summary{list-style:none}summary::-webkit-details-marker{display:none}summary::be
 .vc{background:var(--cd);border-radius:22px;padding:14px;max-width:420px;width:100%;max-height:96vh;overflow:auto}
 #vk{display:flex;flex-wrap:wrap;gap:5px;font:600 1rem ui-monospace,Menlo,Consolas,monospace;justify-content:center;margin:8px 0 12px}#vk span{padding:2px 8px;border-radius:8px;border:1px solid var(--bd)}#vk .cur{background:var(--ac);color:#fff;border-color:var(--ac)}#vk .dn{opacity:.4}
 .ar .mb{margin:0 6px 0 0}
+
+.stg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px;font-size:.9rem}.stg code{font:600 .85rem ui-monospace,Menlo,Consolas,monospace}
+.card ol,.card ul{padding-left:1.3em;margin:.4em 0 .8em}.card li{margin:.25em 0}
