@@ -65,3 +65,4 @@ summary{list-style:none}summary::-webkit-details-marker{display:none}summary::be
 
 .stg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px;font-size:.9rem}.stg code{font:600 .85rem ui-monospace,Menlo,Consolas,monospace}
 .card ol,.card ul{padding-left:1.3em;margin:.4em 0 .8em}.card li{margin:.25em 0}
+.zb2{margin:6px 0 6px 4px;padding-left:10px;border-left:3px solid var(--bd)}.zb2>summary{font-size:.95rem}.zc{margin-top:4px}
