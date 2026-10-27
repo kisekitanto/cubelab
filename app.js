@@ -177,8 +177,8 @@ let tab="timer",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
-function go(t){clearTimeout(T.hold);if(T.s=="run")T.s="idle";tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:vTimer,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn")PR=cube3d($("#pc"),cube());if(tab=="timer"){newScr();stats()}if(tab=="trainer")nextCase()}
+function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
+function render(){$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:vTimer,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn")PR=cube3d($("#pc"),cube());if(tab=="timer"){newScr();stats();tInit()}if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -187,19 +187,52 @@ function fill(){if(tab=="zb")return zbFill();const op=[...document.querySelector
 $("#al").innerHTML=Object.keys(S).map(s=>{const r=S[s].filter(c=>(c.n+c.a+c.t).toLowerCase().includes(q));return r.length?`<details data-s="${s}" ${q||r.length<12||op.includes(s)?"open":""} class="card"><summary>${s} <span class="mu">(${r.length})</span></summary>${r.map(c=>`<div class="case cs">${dia(c.a,s)}<div><b>${c.n}</b> <span class="mu">${c.t}</span>${chip(c.a)}${alts(c,s)}</div></div>`).join("")}</details>`:""}).join("")||`<p class="mu">No matches.</p>`}
 
 /* ---------- TIMER ---------- */
-const fmt=ms=>{if(ms==null)return"–";const s=ms/1000;if(s<60)return s.toFixed(2);return Math.floor(s/60)+":"+(s%60).toFixed(2).padStart(5,"0")};
-const avg=n=>{if(times.length<n)return null;const a=times.slice(-n).map(x=>x.t).sort((x,y)=>x-y).slice(1,-1);return a.reduce((x,y)=>x+y,0)/a.length};
+const fmt=ms=>{if(ms==null)return"–";if(!isFinite(ms))return"DNF";const s=ms/1000;if(s<60)return s.toFixed(2);return Math.floor(s/60)+":"+(s%60).toFixed(2).padStart(5,"0")};
+// ---- settings (saved in this browser) ----
+const PRE={CFOP:["Cross","F2L","OLL","PLL"],Roux:["First block","Second block","CMLL","LSE"],ZZ:["EOLine","F2L","COLL","EPLL"],Beginner:["Cross","White corners","Middle layer","Yellow cross","Match edges","Place corners","Twist corners"]};
+const ST=Object.assign({insp:15,focus:1,any:(typeof matchMedia!="undefined"&&matchMedia("(pointer:coarse)").matches)?1:0,split:0,pre:"CFOP",ph:["Cross","F2L","OLL","PLL"]},ls.get("cl_set",{}));
+const phs=()=>ST.pre=="Custom"?(ST.ph.length?ST.ph:PRE.CFOP):PRE[ST.pre]||PRE.CFOP,ssave=()=>ls.set("cl_set",ST);
+const val=x=>x.pen=="DNF"?Infinity:x.t,ftime=x=>x.pen=="DNF"?"DNF":fmt(x.t)+(x.pen==2?"+":""),deltas=x=>x.sp.map((v,i)=>v-(x.sp[i-1]||0));
+const avg=n=>{if(times.length<n)return null;const a=times.slice(-n).map(val).sort((x,y)=>x-y).slice(1,-1);return a.reduce((x,y)=>x+y,0)/a.length};
 function scr(n=20){const F="UDLRFB",ax={U:0,D:0,L:1,R:1,F:2,B:2};let r=[],l="";while(r.length<n){const f=F[Math.random()*6|0];if(l&&ax[f]==ax[l])continue;l=f;r.push(f+["","'","2"][Math.random()*3|0])}return r.join(" ")}
 function newScr(s){T.scr=s||scr();const e=$("#sc");if(e)e.textContent=T.scr;const c=$("#cx");if(c)c.hidden=true;scInfo()}
-function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div><div id="tz"><div id="tm">0.00</div><div class="mu" id="hint">Hold Space (or press and hold here), release when green</div></div>
-<div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div><div class="card" style="margin-top:12px"><h3>Recent solves</h3><table id="hist"></table></div>`}
-function stats(){const e=$("#stg");if(!e)return;const b=times.length?Math.min(...times.map(x=>x.t)):null,m=times.length?times.reduce((x,y)=>x+y.t,0)/times.length:null;
+const hint0=()=>(ST.insp?`Tap to start ${ST.insp}s inspection, then hold and release to solve`:"Hold Space or press and hold, release when green")+(ST.any?" · tap anywhere":"");
+function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div>
+<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tm">0.00</div><div id="ph" class="phl"></div><div class="mu" id="hint">${hint0()}</div></div>
+<div id="res" class="card" hidden></div><div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div>
+<details class="card" id="tset"><summary>⚙ Timer settings</summary>
+<div class="sr"><label for="si">Inspection</label><select id="si"><option value="0">None</option><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="c">Custom…</option></select><input id="sic" type="number" min="1" max="120" style="width:84px;display:none"></div>
+<div class="sr"><input type="checkbox" id="sf"><label for="sf">Focus mode: show only the timer while solving</label></div>
+<div class="sr"><input type="checkbox" id="sa"><label for="sa">Tap anywhere on the screen to start and stop (phones)</label></div>
+<div class="sr"><input type="checkbox" id="ss"><label for="ss">Split times: tap at the end of each step</label></div>
+<div class="sr"><label for="sp">Steps</label><select id="sp"><option>CFOP</option><option>Roux</option><option>ZZ</option><option>Beginner</option><option>Custom</option></select></div>
+<input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p></details>
+<div id="pst" class="card" hidden></div><div class="card" style="margin-top:12px"><h3>Recent solves</h3><table id="hist"></table></div>`}
+function tInit(){const si=$("#si");if(!si)return;const std=[0,5,10,15].includes(ST.insp);si.value=std?String(ST.insp):"c";$("#sic").style.display=std?"none":"";$("#sic").value=ST.insp;
+$("#sf").checked=!!ST.focus;$("#sa").checked=!!ST.any;$("#ss").checked=!!ST.split;$("#sp").value=ST.pre;$("#spc").value=ST.ph.join(", ");$("#spc").style.display=ST.pre=="Custom"?"":"none";$("#spv").textContent="Steps: "+phs().join(" → ")+(ST.split?"":" (split times are off)")}
+const PC=["#2563eb","#16a34a","#f59e0b","#dc2626","#8b5cf6","#0891b2","#db2777","#65a30d"];
+const bars=(d,names)=>{const tot=d.reduce((a,b)=>a+b,0)||1;return `<div class="bar">${d.map((v,i)=>`<i style="width:${v/tot*100}%;background:${PC[i%8]}"></i>`).join("")}</div>`+d.map((v,i)=>`<div class="mu"><span class="dot" style="background:${PC[i%8]}"></span>${names[i]}: <b>${fmt(v)}</b> (${Math.round(v/tot*100)}%)</div>`).join("")};
+function stats(){const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
 e.innerHTML=[["Best",fmt(b)],["Mean",fmt(m)],["Ao5",fmt(avg(5))],["Ao12",fmt(avg(12))],["Solves",times.length]].map(([l,v])=>`<div class="st"><span class="mu">${l}</span><b>${v}</b></div>`).join("");
-$("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${fmt(x.t)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
-const tz=()=>$("#tz");
-function tdown(){if(tab!="timer"||!tz())return;if(T.s=="run"){tstop();return}if(T.s=="idle"){T.s="hold";tz().className="hold";T.hold=setTimeout(()=>{if(T.s=="hold"){T.s="ready";tz().className="ready"}},300)}}
-function tup(){if(tab!="timer"||!tz())return;if(T.s=="ready"){T.s="run";tz().className="";T.t0=performance.now();$("#hint").textContent="Press any key or tap to stop";(function l(){if(T.s=="run"){$("#tm").textContent=fmt(performance.now()-T.t0);requestAnimationFrame(l)}})()}else if(T.s=="hold"){clearTimeout(T.hold);T.s="idle";tz().className=""}else if(T.s=="wait")T.s="idle"}
-function tstop(){const t=performance.now()-T.t0;T.s="wait";$("#tm").textContent=fmt(t);$("#hint").textContent="Hold Space (or press and hold here), release when green";times.push({t,s:T.scr});ls.set("cl_t",times);T.last=T.scr;newScr();stats()}
+const L=times[times.length-1],r=$("#res");r.hidden=!L;if(L)r.innerHTML=`<div class="sch"><h3>Last solve: ${ftime(L)}</h3><span><button class="mb" id="p2">${L.pen==2?"Remove +2":"+2"}</button><button class="mb" id="pd">${L.pen=="DNF"?"Undo DNF":"DNF"}</button></span></div>${L.sp?bars(deltas(L),L.ph):""}`;
+const K=L&&L.sp?L.ph.join("|"):null,S=K?times.filter(x=>x.sp&&x.ph.join("|")==K).slice(-12):[],p=$("#pst");p.hidden=S.length<2;
+if(S.length>1){const d=L.ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length);p.innerHTML=`<h3>Average per step (last ${S.length} split solves)</h3>`+bars(d,L.ph)}
+$("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${ftime(x)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}${x.sp?"<br>"+deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · "):""}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
+// ---- timer state machine: idle > (tap) > insp > hold > ready > run > wait ----
+const tz=()=>$("#tz"),cls=c=>{const e=tz();if(e)e.className=c},tfocus=on=>{const b=document.body;if(b)b.classList.toggle("tfocus",!!on&&!!ST.focus)};
+function thold(){T.s="hold";tfocus(1);cls("hold");T.hold=setTimeout(()=>{if(T.s=="hold"){T.s="ready";cls("ready")}},300)}
+function tdown(){if(tab!="timer"||!tz())return;const s=T.s;if(s=="run")return tsplit();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
+function tup(){if(tab!="timer"||!tz())return;const s=T.s;
+if(s=="tap"){T.s="insp";T.i0=performance.now();tfocus(1);$("#hint").textContent="Inspection \u00b7 hold to get ready, release to start \u00b7 Esc or \u2715 cancels";itick();return}
+if(s=="ready")return tgo();if(s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0);return}if(s=="wait")T.s="idle"}
+function itick(){if(!T.i0||!["insp","hold","ready"].includes(T.s)||!$("#tm"))return;const el=(performance.now()-T.i0)/1000,r=ST.insp-el;$("#tm").textContent=r>0?Math.ceil(r):el<ST.insp+2?"+2":"DNF";requestAnimationFrame(itick)}
+function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";cls("");tfocus(1);$("#hint").textContent=ST.split&&phs().length>1?"Tap at the end of each step":"Tap or press any key to stop";tphase();(function l(){if(T.s=="run"){$("#tm").textContent=fmt(performance.now()-T.t0);requestAnimationFrame(l)}})()}
+function tphase(){const e=$("#ph");if(!e)return;const P=ST.split?phs():[];e.innerHTML=P.length>1&&T.s=="run"?`<b>${P[Math.min(T.sp.length,P.length-1)]}</b>`+(T.sp.length?"<br>"+T.sp.map((v,i)=>P[i]+" "+fmt(v-(T.sp[i-1]||0))).join(" \u00b7 "):""):""}
+function tsplit(){const P=ST.split?phs():[];if(P.length>1&&T.sp.length<P.length-1){T.sp.push(performance.now()-T.t0);tphase();return}tstop()}
+function tstop(){const t=performance.now()-T.t0,P=ST.split?phs():[],r={t:t+(T.pen==2?2000:0),s:T.scr};if(T.pen)r.pen=T.pen;if(P.length>1){r.sp=[...T.sp,t].map(Math.round);r.ph=P.slice(0,r.sp.length)}
+T.s="wait";tfocus(0);times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();$("#tm").textContent=ftime(r);$("#hint").textContent=hint0()}
+function tcancel(){if(!["tap","insp","hold","ready","run"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);const m=$("#tm");if(m)m.textContent="0.00";tphase();const h=$("#hint");if(h)h.textContent=hint0()}
+function tpen(id){const L=times[times.length-1];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}ls.set("cl_t",times);stats();$("#tm").textContent=ftime(L)}
 
 /* ---------- TRAINER ---------- */
 let TR={set:"All",cur:null,ok:0,n:0,rev:false,t0:0,run:false};
@@ -269,21 +302,29 @@ if(gh)h+=`<details data-s="${g}" ${q||op.includes(g)?"open":""} class="card"><su
 $("#al").innerHTML=h||`<p class="mu">No matches.</p>`}
 document.addEventListener("toggle",e=>{const d=e.target;if(tab!="zb"||!d.open||!d.classList||!d.classList.contains("zb2"))return;const z=d.querySelector(".zc");if(z&&!z.innerHTML){const[g,cn]=d.dataset.s.split("|");z.innerHTML=M.ZBLL.sets["ZBLL "+g].filter(c=>c.g==cn).map(c=>zrow(c,"ZBLL "+g)).join("")}},true);
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],#ns,#dl,#ca,#cb,#rp,#sv");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
 if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
-if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
+if(t.id=="xc")return tcancel();if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
 document.addEventListener("input",e=>{if(e.target.id=="q")fill()});
 document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.value;nextCase()}});
-document.addEventListener("keydown",e=>{if(tab!="timer")return;if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if(T.s=="run")tstop()});
-document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"){e.preventDefault();tup()}});
-document.addEventListener("pointerdown",e=>{if(e.target.closest("#tz"))tdown()});
+const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
+document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape")return tcancel();if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if(T.s=="run"&&!e.repeat){e.preventDefault();tdown()}});
+document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"&&!inField()){e.preventDefault();tup()}});
+document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;if(T.s=="run")return tdown();
+if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb")))tdown()});
 document.addEventListener("pointerup",()=>tup());
+document.addEventListener("pointercancel",()=>{if(T.s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0)}else if(T.s=="tap")T.s="idle"});
+document.addEventListener("change",e=>{const i=e.target.id;if(tab!="timer"||!["si","sic","sf","sa","ss","sp","spc"].includes(i))return;const v=e.target.value;
+if(i=="si"){if(v=="c"){$("#sic").style.display="";ST.insp=Math.max(1,Math.min(120,+$("#sic").value||15));$("#sic").value=ST.insp}else{ST.insp=+v;$("#sic").style.display="none"}}
+else if(i=="sic")ST.insp=Math.max(1,Math.min(120,+v||15));else if(i=="sf")ST.focus=e.target.checked?1:0;else if(i=="sa")ST.any=e.target.checked?1:0;else if(i=="ss")ST.split=e.target.checked?1:0;
+else if(i=="sp"){ST.pre=v;$("#spc").style.display=v=="Custom"?"":"none"}else if(i=="spc")ST.ph=v.split(",").map(x=>x.trim()).filter(x=>x).slice(0,10);
+ssave();$("#spv").textContent="Steps: "+phs().join(" \u2192 ")+(ST.split?"":" (split times are off)");$("#hint").textContent=hint0()});
 addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h)&&h!=tab)go(h)});
 {const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h))tab=h;if(MT[tab])curM=MT[tab]}
 nav();render();

@@ -24,7 +24,9 @@ Where to change things
                          algorithms, grouped shape > corner case > edge case)
   Blindfold page ....... app.js, section BLINDFOLD (setup tables BES = edges,
                          BCS = corners; algorithms BT, BY, BP)
-  Timer / scramble ..... app.js, sections TIMER and the scr() function
+  Timer ................ app.js, section TIMER (inspection, focus mode, splits).
+                         Step names: the PRE object. Settings are saved in the browser.
+  Scramble ............. app.js, the scr() function
   Menu names ........... app.js, the TABS array
 
 Notation in algorithms: U D L R F B (turns), ' = other way, 2 = half turn,

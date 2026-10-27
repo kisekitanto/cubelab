@@ -66,3 +66,11 @@ summary{list-style:none}summary::-webkit-details-marker{display:none}summary::be
 .stg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px;font-size:.9rem}.stg code{font:600 .85rem ui-monospace,Menlo,Consolas,monospace}
 .card ol,.card ul{padding-left:1.3em;margin:.4em 0 .8em}.card li{margin:.25em 0}
 .zb2{margin:6px 0 6px 4px;padding-left:10px;border-left:3px solid var(--bd)}.zb2>summary{font-size:.95rem}.zc{margin-top:4px}
+
+.sr{display:flex;align-items:center;gap:10px;margin:10px 0}.sr select,.sr input[type=number]{margin:0;width:auto}.sr input[type=checkbox]{width:auto;margin:0;transform:scale(1.2)}.sr label{cursor:pointer}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:8px 0}.bar i{display:block}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.phl{margin:6px 0;min-height:1.4em;text-align:center}#xc{display:none}
+body.tfocus{overflow:hidden}body.tfocus header,body.tfocus main>*:not(#tz){display:none!important}
+body.tfocus #tz{position:fixed;inset:0;z-index:60;margin:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);box-shadow:none}
+body.tfocus #tm{font-size:clamp(4rem,26vw,12rem)}
+body.tfocus #xc{display:block;position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px}
