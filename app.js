@@ -190,13 +190,14 @@ $("#al").innerHTML=Object.keys(S).map(s=>{const r=S[s].filter(c=>(c.n+c.a+c.t).t
 const fmt=ms=>{if(ms==null)return"–";if(!isFinite(ms))return"DNF";const s=ms/1000;if(s<60)return s.toFixed(2);return Math.floor(s/60)+":"+(s%60).toFixed(2).padStart(5,"0")};
 // ---- settings (saved in this browser) ----
 const PRE={CFOP:["Cross","F2L","OLL","PLL"],Roux:["First block","Second block","CMLL","LSE"],ZZ:["EOLine","F2L","COLL","EPLL"],Beginner:["Cross","White corners","Middle layer","Yellow cross","Match edges","Place corners","Twist corners"]};
-const ST=Object.assign({insp:15,focus:1,any:(typeof matchMedia!="undefined"&&matchMedia("(pointer:coarse)").matches)?1:0,split:0,pre:"CFOP",ph:["Cross","F2L","OLL","PLL"]},ls.get("cl_set",{}));
+const ST=Object.assign({insp:15,focus:1,any:(typeof matchMedia!="undefined"&&matchMedia("(pointer:coarse)").matches)?1:0,split:0,sm:"tap",rd:0,pre:"CFOP",ph:["Cross","F2L","OLL","PLL"]},ls.get("cl_set",{}));
 const phs=()=>ST.pre=="Custom"?(ST.ph.length?ST.ph:PRE.CFOP):PRE[ST.pre]||PRE.CFOP,ssave=()=>ls.set("cl_set",ST);
 const val=x=>x.pen=="DNF"?Infinity:x.t,ftime=x=>x.pen=="DNF"?"DNF":fmt(x.t)+(x.pen==2?"+":""),deltas=x=>x.sp.map((v,i)=>v-(x.sp[i-1]||0));
 const avg=n=>{if(times.length<n)return null;const a=times.slice(-n).map(val).sort((x,y)=>x-y).slice(1,-1);return a.reduce((x,y)=>x+y,0)/a.length};
 function scr(n=20){const F="UDLRFB",ax={U:0,D:0,L:1,R:1,F:2,B:2};let r=[],l="";while(r.length<n){const f=F[Math.random()*6|0];if(l&&ax[f]==ax[l])continue;l=f;r.push(f+["","'","2"][Math.random()*3|0])}return r.join(" ")}
 function newScr(s){T.scr=s||scr();const e=$("#sc");if(e)e.textContent=T.scr;const c=$("#cx");if(c)c.hidden=true;scInfo()}
 const hint0=()=>(ST.insp?`Tap to start ${ST.insp}s inspection, then hold and release to solve`:"Hold Space or press and hold, release when green")+(ST.any?" · tap anywhere":"");
+const tHint=()=>ST.split&&phs().length>1?(ST.sm=="hold"?"Hold Space or touch to pause and see the step time, release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")+" \u00b7 on the last step, press to stop":"Tap at the end of each step"):"Tap or press any key to stop";
 function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div>
 <div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tm">0.00</div><div id="ph" class="phl"></div><div class="mu" id="hint">${hint0()}</div></div>
 <div id="res" class="card" hidden></div><div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div>
@@ -205,11 +206,12 @@ function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scrambl
 <div class="sr"><input type="checkbox" id="sf"><label for="sf">Focus mode: show only the timer while solving</label></div>
 <div class="sr"><input type="checkbox" id="sa"><label for="sa">Tap anywhere on the screen to start and stop (phones)</label></div>
 <div class="sr"><input type="checkbox" id="ss"><label for="ss">Split times: tap at the end of each step</label></div>
+<div class="sr"><label for="sm">Split style</label><select id="sm"><option value="tap">Tap at the end of each step</option><option value="hold">Hold to pause and see the step time</option></select></div><div class="sr"><label for="rd">After releasing</label><select id="rd"><option value="0">Continue right away</option><option value="3">Wait 3 seconds</option><option value="5">Wait 5 seconds</option></select></div>
 <div class="sr"><label for="sp">Steps</label><select id="sp"><option>CFOP</option><option>Roux</option><option>ZZ</option><option>Beginner</option><option>Custom</option></select></div>
 <input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p></details>
 <div id="pst" class="card" hidden></div><div class="card" style="margin-top:12px"><h3>Recent solves</h3><table id="hist"></table></div>`}
 function tInit(){const si=$("#si");if(!si)return;const std=[0,5,10,15].includes(ST.insp);si.value=std?String(ST.insp):"c";$("#sic").style.display=std?"none":"";$("#sic").value=ST.insp;
-$("#sf").checked=!!ST.focus;$("#sa").checked=!!ST.any;$("#ss").checked=!!ST.split;$("#sp").value=ST.pre;$("#spc").value=ST.ph.join(", ");$("#spc").style.display=ST.pre=="Custom"?"":"none";$("#spv").textContent="Steps: "+phs().join(" → ")+(ST.split?"":" (split times are off)")}
+$("#sf").checked=!!ST.focus;$("#sa").checked=!!ST.any;$("#ss").checked=!!ST.split;$("#sp").value=ST.pre;$("#sm").value=ST.sm;$("#rd").value=String(ST.rd);$("#spc").value=ST.ph.join(", ");$("#spc").style.display=ST.pre=="Custom"?"":"none";$("#spv").textContent="Steps: "+phs().join(" → ")+(ST.split?"":" (split times are off)")}
 const PC=["#2563eb","#16a34a","#f59e0b","#dc2626","#8b5cf6","#0891b2","#db2777","#65a30d"];
 const bars=(d,names)=>{const tot=d.reduce((a,b)=>a+b,0)||1;return `<div class="bar">${d.map((v,i)=>`<i style="width:${v/tot*100}%;background:${PC[i%8]}"></i>`).join("")}</div>`+d.map((v,i)=>`<div class="mu"><span class="dot" style="background:${PC[i%8]}"></span>${names[i]}: <b>${fmt(v)}</b> (${Math.round(v/tot*100)}%)</div>`).join("")};
 function stats(){const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
@@ -221,17 +223,24 @@ $("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">$
 // ---- timer state machine: idle > (tap) > insp > hold > ready > run > wait ----
 const tz=()=>$("#tz"),cls=c=>{const e=tz();if(e)e.className=c},tfocus=on=>{const b=document.body;if(b)b.classList.toggle("tfocus",!!on&&!!ST.focus)};
 function thold(){T.s="hold";tfocus(1);cls("hold");T.hold=setTimeout(()=>{if(T.s=="hold"){T.s="ready";cls("ready")}},300)}
-function tdown(){if(tab!="timer"||!tz())return;const s=T.s;if(s=="run")return tsplit();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
+function tdown(){if(tab!="timer"||!tz())return;const s=T.s;if(s=="run")return ST.split&&ST.sm=="hold"&&phs().length>1&&T.sp.length<phs().length-1?tpause():tsplit();if(s=="rwait")return tresume();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
 function tup(){if(tab!="timer"||!tz())return;const s=T.s;
 if(s=="tap"){T.s="insp";T.i0=performance.now();tfocus(1);$("#hint").textContent="Inspection \u00b7 hold to get ready, release to start \u00b7 Esc or \u2715 cancels";itick();return}
-if(s=="ready")return tgo();if(s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0);return}if(s=="wait")T.s="idle"}
+if(s=="ready")return tgo();if(s=="pause")return ST.rd>0?trwait():tresume();if(s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0);return}if(s=="wait")T.s="idle"}
 function itick(){if(!T.i0||!["insp","hold","ready"].includes(T.s)||!$("#tm"))return;const el=(performance.now()-T.i0)/1000,r=ST.insp-el;$("#tm").textContent=r>0?Math.ceil(r):el<ST.insp+2?"+2":"DNF";requestAnimationFrame(itick)}
-function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";cls("");tfocus(1);$("#hint").textContent=ST.split&&phs().length>1?"Tap at the end of each step":"Tap or press any key to stop";tphase();(function l(){if(T.s=="run"){$("#tm").textContent=fmt(performance.now()-T.t0);requestAnimationFrame(l)}})()}
-function tphase(){const e=$("#ph");if(!e)return;const P=ST.split?phs():[];e.innerHTML=P.length>1&&T.s=="run"?`<b>${P[Math.min(T.sp.length,P.length-1)]}</b>`+(T.sp.length?"<br>"+T.sp.map((v,i)=>P[i]+" "+fmt(v-(T.sp[i-1]||0))).join(" \u00b7 "):""):""}
+function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";cls("");tfocus(1);$("#hint").textContent=tHint();tphase();tloop()}
+function tphase(){const e=$("#ph");if(!e)return;const P=ST.split?phs():[];if(P.length<2||!["run","pause","rwait"].includes(T.s)){e.innerHTML="";return}
+const n=T.sp.length,d=T.sp.map((v,i)=>v-(T.sp[i-1]||0)),nx=P[Math.min(n,P.length-1)];
+e.innerHTML=(T.s!="run"&&n?`<b>\u2714 ${P[n-1]}: ${fmt(d[n-1])}</b> \u00b7 next: ${nx}`:`<b>${nx}</b>`)+(n?"<br>"+d.map((v,i)=>P[i]+" "+fmt(v)).join(" \u00b7 "):"")}
+function tloop(){if(T.s=="run"){$("#tm").textContent=fmt(performance.now()-T.t0);requestAnimationFrame(tloop)}}
+// hold-to-split: the clock stops while you hold (and during the optional wait), then continues
+function tpause(){const now=performance.now();T.pa=now;T.sp.push(now-T.t0);T.s="pause";$("#tm").textContent=fmt(now-T.t0);tphase();$("#hint").textContent="Paused \u00b7 release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")}
+function trwait(){T.s="rwait";T.rw=performance.now();(function l(){if(T.s!="rwait")return;const r=ST.rd-(performance.now()-T.rw)/1000;if(r<=0)return tresume();$("#hint").textContent=`Continuing in ${Math.ceil(r)}\u2026 (press to skip)`;requestAnimationFrame(l)})()}
+function tresume(){T.t0+=performance.now()-T.pa;T.s="run";tphase();$("#hint").textContent=tHint();tloop()}
 function tsplit(){const P=ST.split?phs():[];if(P.length>1&&T.sp.length<P.length-1){T.sp.push(performance.now()-T.t0);tphase();return}tstop()}
 function tstop(){const t=performance.now()-T.t0,P=ST.split?phs():[],r={t:t+(T.pen==2?2000:0),s:T.scr};if(T.pen)r.pen=T.pen;if(P.length>1){r.sp=[...T.sp,t].map(Math.round);r.ph=P.slice(0,r.sp.length)}
 T.s="wait";tfocus(0);times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();$("#tm").textContent=ftime(r);$("#hint").textContent=hint0()}
-function tcancel(){if(!["tap","insp","hold","ready","run"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);const m=$("#tm");if(m)m.textContent="0.00";tphase();const h=$("#hint");if(h)h.textContent=hint0()}
+function tcancel(){if(!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);const m=$("#tm");if(m)m.textContent="0.00";tphase();const h=$("#hint");if(h)h.textContent=hint0()}
 function tpen(id){const L=times[times.length-1];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}ls.set("cl_t",times);stats();$("#tm").textContent=ftime(L)}
 
 /* ---------- TRAINER ---------- */
@@ -314,16 +323,16 @@ if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clea
 document.addEventListener("input",e=>{if(e.target.id=="q")fill()});
 document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.value;nextCase()}});
 const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
-document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape")return tcancel();if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if(T.s=="run"&&!e.repeat){e.preventDefault();tdown()}});
+document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape")return tcancel();if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
 document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"&&!inField()){e.preventDefault();tup()}});
-document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;if(T.s=="run")return tdown();
+document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;if(T.s=="run"||T.s=="rwait")return tdown();
 if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb")))tdown()});
 document.addEventListener("pointerup",()=>tup());
-document.addEventListener("pointercancel",()=>{if(T.s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0)}else if(T.s=="tap")T.s="idle"});
-document.addEventListener("change",e=>{const i=e.target.id;if(tab!="timer"||!["si","sic","sf","sa","ss","sp","spc"].includes(i))return;const v=e.target.value;
+document.addEventListener("pointercancel",()=>{if(T.s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0)}else if(T.s=="tap")T.s="idle";else if(T.s=="pause")tup()});
+document.addEventListener("change",e=>{const i=e.target.id;if(tab!="timer"||!["si","sic","sf","sa","ss","sp","spc","sm","rd"].includes(i))return;const v=e.target.value;
 if(i=="si"){if(v=="c"){$("#sic").style.display="";ST.insp=Math.max(1,Math.min(120,+$("#sic").value||15));$("#sic").value=ST.insp}else{ST.insp=+v;$("#sic").style.display="none"}}
 else if(i=="sic")ST.insp=Math.max(1,Math.min(120,+v||15));else if(i=="sf")ST.focus=e.target.checked?1:0;else if(i=="sa")ST.any=e.target.checked?1:0;else if(i=="ss")ST.split=e.target.checked?1:0;
-else if(i=="sp"){ST.pre=v;$("#spc").style.display=v=="Custom"?"":"none"}else if(i=="spc")ST.ph=v.split(",").map(x=>x.trim()).filter(x=>x).slice(0,10);
+else if(i=="sm")ST.sm=v;else if(i=="rd")ST.rd=+v;else if(i=="sp"){ST.pre=v;$("#spc").style.display=v=="Custom"?"":"none"}else if(i=="spc")ST.ph=v.split(",").map(x=>x.trim()).filter(x=>x).slice(0,10);
 ssave();$("#spv").textContent="Steps: "+phs().join(" \u2192 ")+(ST.split?"":" (split times are off)");$("#hint").textContent=hint0()});
 addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h)&&h!=tab)go(h)});
 {const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h))tab=h;if(MT[tab])curM=MT[tab]}

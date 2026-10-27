@@ -25,7 +25,8 @@ Where to change things
   Blindfold page ....... app.js, section BLINDFOLD (setup tables BES = edges,
                          BCS = corners; algorithms BT, BY, BP)
   Timer ................ app.js, section TIMER (inspection, focus mode, splits).
-                         Step names: the PRE object. Settings are saved in the browser.
+                         Split style (tap or hold-to-pause) and the wait time are in the
+                         timer settings. Step names: the PRE object. Settings are saved in the browser.
   Scramble ............. app.js, the scr() function
   Menu names ........... app.js, the TABS array
 
