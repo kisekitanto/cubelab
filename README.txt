@@ -20,6 +20,8 @@ Where to change things
   F2L (41 cases) ....... app.js, the F2 array: ["algorithm", groupNumber]
   Roux / ZZ sets ....... app.js, between /*ADV-START*/ and /*ADV-END*/
                          (CM42 = 42 CMLL, COL = 42 COLL, EOA = LSE edge orientation)
+  ZBLL page ............ app.js, between /*ZB-START*/ and /*ZB-END*/ (ZB = the 493
+                         algorithms, grouped shape > corner case > edge case)
   Blindfold page ....... app.js, section BLINDFOLD (setup tables BES = edges,
                          BCS = corners; algorithms BT, BY, BP)
   Timer / scramble ..... app.js, sections TIMER and the scr() function
