@@ -13,6 +13,8 @@ Run it
 
 Where to change things
   Colors / theme ....... top of style.css (the :root variables, light and dark)
+  2-look OLL + last-pair lessons: app.js, LS.push(...) in the section
+                         "2-look OLL lessons" (steps 8-10 and the predictor)
   Beginner steps ....... app.js, the LS array ("beginner lessons"). Each step is
                          [title, text, [[name, algorithm, repeat]], [[demo...]]]
   OLL (57 cases) ....... app.js, the OLLS array (case N = Nth string)
