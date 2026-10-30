@@ -74,3 +74,37 @@ body.tfocus{overflow:hidden}body.tfocus header,body.tfocus main>*:not(#tz){displ
 body.tfocus #tz{position:fixed;inset:0;z-index:60;margin:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);box-shadow:none}
 body.tfocus #tm{font-size:clamp(4rem,26vw,12rem)}
 body.tfocus #xc{display:block;position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px}
+
+/* ---------- csTimer-style desktop timer (wide screens with a mouse) ---------- */
+.cb2{width:40px;height:40px;background:#333;border:1px solid #777;border-radius:5px;color:#fff;font-size:1.15rem;cursor:pointer}.cb2:hover{background:#444}
+body.cs{--bg:#000;--cd:#151515;--tx:#eaeaea;--mu:#9a9a9a;--bd:#4a4a4a;--ac:#7aa5ff;background:#000;color-scheme:dark}
+body.cs::before{display:none}
+body.cs header{position:fixed;top:6px;left:6px;right:auto;width:auto;background:none;border:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none;z-index:45}
+body.cs header h1{display:none}body.cs .hb{padding:0}
+body.cs #mb{width:40px;height:40px;background:#333;border:1px solid #777;border-radius:5px;color:#fff}
+body.cs nav{left:0;right:auto;width:220px;top:calc(100% + 6px)}
+body.cs main{max-width:none;padding:0}
+#csbtn{position:fixed;top:6px;left:52px;display:flex;gap:6px;z-index:45}
+#clogo{position:fixed;top:52px;left:6px;width:min(300px,26vw);height:50px;line-height:50px;text-align:center;background:#d8d8d8;color:#222;font:800 1.7rem system-ui,sans-serif;border-radius:5px;letter-spacing:.02em;z-index:20;box-shadow:inset 0 0 0 3px #999}
+#csbar{position:fixed;top:6px;left:50%;transform:translateX(-50%);width:min(820px,54vw);background:#2a2a2a;border:1px solid #777;border-radius:6px;padding:4px 12px 6px;text-align:center;z-index:30;box-shadow:0 0 10px #000}
+#csbar .tl{font-size:.78rem;color:#aaa}#csbar .tl button{background:none;border:0;color:#ddd;cursor:pointer;font:inherit;padding:0 3px}#csbar .tl button:hover{color:#fff;text-decoration:underline}
+body.cs #csbar #sc{font:600 1.2rem/1.5 ui-monospace,Menlo,Consolas,monospace;margin:2px 0 0;color:#fff;word-spacing:.35em}
+body.cs #cx{position:fixed;top:92px;left:50%;transform:translateX(-50%);width:min(620px,56vw);z-index:35;margin:0}
+body.cs #tz{position:fixed;inset:0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5}
+body.cs #tmw{display:flex;align-items:baseline;gap:.25em}
+body.cs #tm{font:700 clamp(5.5rem,14vw,14rem)/1 Orbitron,"Share Tech Mono",ui-monospace,Menlo,Consolas,monospace;color:#fff;letter-spacing:.02em}
+body.cs #tm .td{font-size:.52em}
+body.cs #dlt{font:600 clamp(1.4rem,2.6vw,2.4rem) ui-monospace,Menlo,Consolas,monospace}
+body.cs #sub{margin-top:1.2vh;text-align:center;font:600 clamp(1.4rem,3.2vw,2.8rem)/1.35 ui-monospace,Menlo,Consolas,monospace;color:#9a9a9a}
+body.cs #res{background:none;border:0;box-shadow:none;margin:10px 0 0;padding:0}
+body.cs #res h3,body.cs #res .bar,body.cs #res>.mu{display:none}body.cs #res .sch{justify-content:center}
+body.cs #hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#666;font-size:.8rem}
+body.cs #tz.hold #tm{color:#ff5555}body.cs #tz.ready #tm{color:#55ff55}
+body.tfocus.cs #sub,body.tfocus.cs #res{display:none}
+#lp{position:fixed;left:6px;top:108px;bottom:6px;width:min(300px,26vw);background:#1a1a1a;border:1px solid #666;border-radius:5px;display:flex;flex-direction:column;z-index:20;color:#ddd;font-size:.8rem;overflow:hidden;box-shadow:0 0 8px #000}
+#lp table{width:100%;border-collapse:collapse}#lp td,#lp th{border:1px solid #4a4a4a;padding:2px 5px;text-align:center;font-variant-numeric:tabular-nums}
+#lp th{background:#2a2a2a;color:#bbb;font-weight:600}#lp .cst th:first-child{text-align:left}#lp .sm{font-weight:600}
+#stg{padding:6px;border-bottom:1px solid #555}#sol{flex:1;overflow:auto}#sol th{position:sticky;top:0}
+.lpb{display:flex;gap:6px;padding:6px;border-top:1px solid #555}.lpb button{flex:1;background:#2a2a2a;color:#ddd;border:1px solid #666;border-radius:4px;padding:4px;cursor:pointer;font:inherit}
+#snp{position:fixed;right:6px;bottom:6px;width:min(230px,20vw);background:#1a1a1a;border:1px solid #666;border-radius:5px;padding:6px;z-index:20}
+#setpop{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:min(560px,92vw);max-height:92vh;overflow:auto;background:#222;border:1px solid #777;border-radius:10px;padding:14px 16px;z-index:90;box-shadow:0 10px 40px #000}#setpop[hidden]{display:none}

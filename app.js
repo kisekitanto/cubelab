@@ -91,7 +91,7 @@ else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[E
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
 const IC={timer:"⏱",scr:"🔀",learn:"🎓",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
-function scInfo(){const u=$("#su");if(!u)return;const r=times.filter(x=>x.s==T.scr).map(x=>x.t);u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:"new scramble";const b=$("#sv");if(b)b.textContent=PIN.includes(T.scr)?"★ Saved":"☆ Save"}
+function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:"new scramble";const b=$("#sv");if(b)b.textContent=CS()?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
 function vScr(){const c={};times.forEach(x=>c[x.s]=(c[x.s]||0)+1);const many=Object.keys(c).filter(s=>c[s]>1).sort((a,b)=>c[b]-c[a]).slice(0,20);
@@ -178,7 +178,7 @@ let tab="timer",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:vTimer,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit()}if(tab=="trainer")nextCase()}
+function render(){document.body.classList.toggle("cs",tab=="timer"&&isDesk());$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimer(),trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit()}if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -195,53 +195,74 @@ const phs=()=>ST.pre=="Custom"?(ST.ph.length?ST.ph:PRE.CFOP):PRE[ST.pre]||PRE.CF
 const val=x=>x.pen=="DNF"?Infinity:x.t,ftime=x=>x.pen=="DNF"?"DNF":fmt(x.t)+(x.pen==2?"+":""),deltas=x=>x.sp.map((v,i)=>v-(x.sp[i-1]||0));
 const avg=n=>{if(times.length<n)return null;const a=times.slice(-n).map(val).sort((x,y)=>x-y).slice(1,-1);return a.reduce((x,y)=>x+y,0)/a.length};
 function scr(n=20){const F="UDLRFB",ax={U:0,D:0,L:1,R:1,F:2,B:2};let r=[],l="";while(r.length<n){const f=F[Math.random()*6|0];if(l&&ax[f]==ax[l])continue;l=f;r.push(f+["","'","2"][Math.random()*3|0])}return r.join(" ")}
-function newScr(s){T.scr=s||scr();const e=$("#sc");if(e)e.textContent=T.scr;const c=$("#cx");if(c)c.hidden=true;scInfo()}
+function newScr(s){T.scr=s||scr();const e=$("#sc");if(e)e.textContent=T.scr;const c=$("#cx");if(c)c.hidden=true;scInfo();const n=$("#snp");if(n)n.innerHTML=snetSvg(T.scr)}
 const hint0=()=>(ST.insp?`Tap to start ${ST.insp}s inspection, then hold and release to solve`:"Hold Space or press and hold, release when green")+(ST.any?" · tap anywhere":"");
 const tHint=()=>ST.split&&phs().length>1?(ST.sm=="hold"?"Hold Space or touch to pause and see the step time, release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")+" \u00b7 on the last step, press to stop":"Tap at the end of each step"):"Tap or press any key to stop";
-function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div>
-<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tm">0.00</div><div id="ph" class="phl"></div><div class="mu" id="hint">${hint0()}</div></div>
-<div id="res" class="card" hidden></div><div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div>
-<details class="card" id="tset"><summary>⚙ Timer settings</summary>
+const setHtml=()=>`
 <div class="sr"><label for="si">Inspection</label><select id="si"><option value="0">None</option><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="c">Custom…</option></select><input id="sic" type="number" min="1" max="120" style="width:84px;display:none"></div>
 <div class="sr"><input type="checkbox" id="sf"><label for="sf">Focus mode: show only the timer while solving</label></div>
 <div class="sr"><input type="checkbox" id="sa"><label for="sa">Tap anywhere on the screen to start and stop (phones)</label></div>
 <div class="sr"><input type="checkbox" id="ss"><label for="ss">Split times: tap at the end of each step</label></div>
 <div class="sr"><label for="sm">Split style</label><select id="sm"><option value="tap">Tap at the end of each step</option><option value="hold">Hold to pause and see the step time</option></select></div><div class="sr"><label for="rd">After releasing</label><select id="rd"><option value="0">Continue right away</option><option value="3">Wait 3 seconds</option><option value="5">Wait 5 seconds</option></select></div>
 <div class="sr"><label for="sp">Steps</label><select id="sp"><option>CFOP</option><option>Roux</option><option>ZZ</option><option>Beginner</option><option>Custom</option></select></div>
-<input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p></details>
+<input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p>`;
+function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div>
+<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tm">0.00</div><div id="ph" class="phl"></div><div class="mu" id="hint">${hint0()}</div></div>
+<div id="res" class="card" hidden></div><div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div>
+<details class="card" id="tset"><summary>⚙ Timer settings</summary>${setHtml()}</details>
 <div id="pst" class="card" hidden></div><div class="card" style="margin-top:12px"><h3>Recent solves</h3><table id="hist"></table></div>`}
 function tInit(){const si=$("#si");if(!si)return;const std=[0,5,10,15].includes(ST.insp);si.value=std?String(ST.insp):"c";$("#sic").style.display=std?"none":"";$("#sic").value=ST.insp;
 $("#sf").checked=!!ST.focus;$("#sa").checked=!!ST.any;$("#ss").checked=!!ST.split;$("#sp").value=ST.pre;$("#sm").value=ST.sm;$("#rd").value=String(ST.rd);$("#spc").value=ST.ph.join(", ");$("#spc").style.display=ST.pre=="Custom"?"":"none";$("#spv").textContent="Steps: "+phs().join(" → ")+(ST.split?"":" (split times are off)")}
 const PC=["#2563eb","#16a34a","#f59e0b","#dc2626","#8b5cf6","#0891b2","#db2777","#65a30d"];
 const bars=(d,names)=>{const tot=d.reduce((a,b)=>a+b,0)||1;return `<div class="bar">${d.map((v,i)=>`<i style="width:${v/tot*100}%;background:${PC[i%8]}"></i>`).join("")}</div>`+d.map((v,i)=>`<div class="mu"><span class="dot" style="background:${PC[i%8]}"></span>${names[i]}: <b>${fmt(v)}</b> (${Math.round(v/tot*100)}%)</div>`).join("")};
+const isDesk=()=>typeof matchMedia!="undefined"&&matchMedia("(min-width:900px) and (pointer:fine)").matches,CS=()=>!!(document.body&&document.body.classList.contains("cs"));
+const aoN=(a,n)=>{if(a.length<n)return null;const w=a.slice(-n).sort((x,y)=>x-y),t=Math.ceil(n/20),m=w.slice(t,n-t);return m.reduce((x,y)=>x+y,0)/m.length},moN=(a,n)=>a.length<n?null:a.slice(-n).reduce((x,y)=>x+y,0)/n;
+const bestOf=(a,n,f)=>{let b=null;for(let i=n;i<=a.length;i++){const v=f(a.slice(0,i),n);if(v!=null&&isFinite(v)&&(b==null||v<b))b=v}return b};
+const dlt=()=>{const n=times.length;if(n<2)return"";const a=times[n-1],b=times[n-2];if(a.pen=="DNF"||b.pen=="DNF")return"";const d=(a.t-b.t)/1000;return `<span class="${d<=0?"ok":"bad"}">(${d<=0?"\u2212":"+"}${Math.abs(d).toFixed(2)})</span>`};
+function tmSet(str,d){const e=$("#tm");if(!e)return;const m=/^([^.]*)(\.\d+)?(.*)$/.exec(String(str));e.innerHTML=m[2]?`<span class="tb">${m[1]}</span><span class="td">${m[2]}</span>${m[3]}`:String(str);const x=$("#dlt");if(x)x.innerHTML=d||""}
+function statsCs(){const v=times.map(val),fin=v.filter(isFinite),fm=x=>x==null?"-":fmt(x),ph=ST.split&&phs().length>1?phs().length:0,mean=fin.length?fin.reduce((a,b)=>a+b,0)/fin.length:null;
+const def=[["time",1,a=>a[a.length-1]],["mo3",3,moN],["ao5",5,aoN],["ao12",12,aoN],["ao100",100,aoN]];
+$("#stg").innerHTML=`<table class="cst"><tr><th></th><th>current</th><th>best</th></tr>`+def.map(([n,k,f])=>`<tr><th>${n}</th><td>${fm(f(v,k))}</td><td>${fm(n=="time"?(fin.length?Math.min(...fin):null):bestOf(v,k,f))}</td></tr>`).join("")+`</table>`;
+const pm=j=>{const q=times.filter(x=>x.sp&&x.sp.length>j).map(x=>deltas(x)[j]);return q.length?q.reduce((a,b)=>a+b,0)/q.length:null};
+let h=`<tr><td colspan="4" class="sm">solve: ${fin.length}/${times.length}<br>mean: ${fm(mean)}</td>`+Array.from({length:ph},(_,j)=>`<td>${fm(pm(j))}</td>`).join("")+`</tr><tr><th>p</th><th>time</th><th>ao5</th><th>ao12</th>`+Array.from({length:ph},(_,j)=>`<th>P.${j+1}</th>`).join("")+`</tr>`;
+for(let i=times.length-1;i>=Math.max(0,times.length-80);i--){const x=times[i],a=v.slice(0,i+1);h+=`<tr title="${x.s}"><td>${i+1}</td><td>${ftime(x)}</td><td>${fm(aoN(a,5))}</td><td>${fm(aoN(a,12))}</td>`+Array.from({length:ph},(_,j)=>`<td>${x.sp&&x.sp.length>j?fmt(deltas(x)[j]):"-"}</td>`).join("")+`</tr>`}
+$("#hist").innerHTML=h;const a5=aoN(v,5),a12=aoN(v,12);$("#sub").innerHTML=(a5!=null?`ao5: ${fmt(a5)}<br>`:"")+(a12!=null?`ao12: ${fmt(a12)}`:"")}
 function stats(){const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
-e.innerHTML=[["Best",fmt(b)],["Mean",fmt(m)],["Ao5",fmt(avg(5))],["Ao12",fmt(avg(12))],["Solves",times.length]].map(([l,v])=>`<div class="st"><span class="mu">${l}</span><b>${v}</b></div>`).join("");
+if(CS())statsCs();else{e.innerHTML=[["Best",fmt(b)],["Mean",fmt(m)],["Ao5",fmt(avg(5))],["Ao12",fmt(avg(12))],["Solves",times.length]].map(([l,v])=>`<div class="st"><span class="mu">${l}</span><b>${v}</b></div>`).join("");
+$("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${ftime(x)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}${x.sp?"<br>"+deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · "):""}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
 const L=times[times.length-1],r=$("#res");r.hidden=!L;if(L)r.innerHTML=`<div class="sch"><h3>Last solve: ${ftime(L)}</h3><span><button class="mb" id="p2">${L.pen==2?"Remove +2":"+2"}</button><button class="mb" id="pd">${L.pen=="DNF"?"Undo DNF":"DNF"}</button></span></div>${L.sp?bars(deltas(L),L.ph):""}`;
 const K=L&&L.sp?L.ph.join("|"):null,S=K?times.filter(x=>x.sp&&x.ph.join("|")==K).slice(-12):[],p=$("#pst");p.hidden=S.length<2;
-if(S.length>1){const d=L.ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length);p.innerHTML=`<h3>Average per step (last ${S.length} split solves)</h3>`+bars(d,L.ph)}
-$("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${ftime(x)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}${x.sp?"<br>"+deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · "):""}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
+if(S.length>1){const d=L.ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length);p.innerHTML=`<h3>Average per step (last ${S.length} split solves)</h3>`+bars(d,L.ph)}}
+function snetSvg(sc){const S=cube();sc.split(" ").forEach(t=>mv(S,t));const off={U:[3,0],L:[0,3],F:[3,3],R:[6,3],B:[9,3],D:[3,6]},col={U:"#ffffff",D:"#ffd500",F:"#00a651",B:"#0a4de0",R:"#e02020",L:"#ff8a00"};let o="";
+for(const s of S){const f=Object.keys(FNm).find(q=>FNm[q].join()==s.n.join()),p=s.p;let c,r;if(f=="U"){c=p[0]+1;r=p[2]+1}else if(f=="F"){c=p[0]+1;r=1-p[1]}else if(f=="R"){c=1-p[2];r=1-p[1]}else if(f=="B"){c=1-p[0];r=1-p[1]}else if(f=="L"){c=p[2]+1;r=1-p[1]}else{c=p[0]+1;r=1-p[2]}
+o+=`<rect x="${(off[f][0]+c)*13+2}" y="${(off[f][1]+r)*13+2}" width="12" height="12" fill="${col[s.c]}" stroke="#000"/>`}return `<svg viewBox="0 0 160 121" width="100%" aria-label="Scramble preview">${o}</svg>`}
+function vTimerDesk(){return `<div id="csbtn"><button class="cb2" id="bset" title="Timer settings">⚙</button><button class="cb2" id="blp" title="Show or hide the solves">📊</button></div><div id="clogo">CubeLab</div>
+<div id="csbar"><div class="tl">WCA · 3x3x3 · <button id="rp">last</button>/<button id="ns">next</button> scramble · <button id="sv">☆</button> <button id="cb" title="Fastest cross">🎯</button> <span id="su" class="mu"></span></div><p id="sc"></p></div><div id="cx" class="card" hidden></div>
+<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tmw"><div id="tm">0.00</div><span id="dlt"></span></div><div id="ph" class="phl"></div><div id="sub"></div><div id="res" class="card" hidden></div><div class="mu" id="hint">${hint0()}</div></div>
+<div id="lp"><div id="stg"></div><div id="sol"><table id="hist"></table></div><div class="lpb"><button id="dl">Delete last</button><button id="ca">Clear all</button></div></div><div id="snp"></div><div id="pst" hidden></div>
+<div id="setpop" hidden><div class="sch"><b>⚙ Timer settings</b><button class="mb" id="xs">✕ Close</button></div>${setHtml()}</div>`}
 // ---- timer state machine: idle > (tap) > insp > hold > ready > run > wait ----
 const tz=()=>$("#tz"),cls=c=>{const e=tz();if(e)e.className=c},tfocus=on=>{const b=document.body;if(b)b.classList.toggle("tfocus",!!on&&!!ST.focus)};
 function thold(){T.s="hold";tfocus(1);cls("hold");T.hold=setTimeout(()=>{if(T.s=="hold"){T.s="ready";cls("ready")}},300)}
-function tdown(){if(tab!="timer"||!tz())return;const s=T.s;if(s=="run")return ST.split&&ST.sm=="hold"&&phs().length>1&&T.sp.length<phs().length-1?tpause():tsplit();if(s=="rwait")return tresume();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
+function tdown(){if(tab!="timer"||!tz())return;const sp=$("#setpop");if(sp&&!sp.hidden)return;const s=T.s;if(s=="run")return ST.split&&ST.sm=="hold"&&phs().length>1&&T.sp.length<phs().length-1?tpause():tsplit();if(s=="rwait")return tresume();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
 function tup(){if(tab!="timer"||!tz())return;const s=T.s;
 if(s=="tap"){T.s="insp";T.i0=performance.now();tfocus(1);$("#hint").textContent="Inspection \u00b7 hold to get ready, release to start \u00b7 Esc or \u2715 cancels";itick();return}
 if(s=="ready")return tgo();if(s=="pause")return ST.rd>0?trwait():tresume();if(s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0);return}if(s=="wait")T.s="idle"}
-function itick(){if(!T.i0||!["insp","hold","ready"].includes(T.s)||!$("#tm"))return;const el=(performance.now()-T.i0)/1000,r=ST.insp-el;$("#tm").textContent=r>0?Math.ceil(r):el<ST.insp+2?"+2":"DNF";requestAnimationFrame(itick)}
+function itick(){if(!T.i0||!["insp","hold","ready"].includes(T.s)||!$("#tm"))return;const el=(performance.now()-T.i0)/1000,r=ST.insp-el;tmSet(r>0?Math.ceil(r):el<ST.insp+2?"+2":"DNF");requestAnimationFrame(itick)}
 function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";cls("");tfocus(1);$("#hint").textContent=tHint();tphase();tloop()}
 function tphase(){const e=$("#ph");if(!e)return;const P=ST.split?phs():[];if(P.length<2||!["run","pause","rwait"].includes(T.s)){e.innerHTML="";return}
 const n=T.sp.length,d=T.sp.map((v,i)=>v-(T.sp[i-1]||0)),nx=P[Math.min(n,P.length-1)];
 e.innerHTML=(T.s!="run"&&n?`<b>\u2714 ${P[n-1]}: ${fmt(d[n-1])}</b> \u00b7 next: ${nx}`:`<b>${nx}</b>`)+(n?"<br>"+d.map((v,i)=>P[i]+" "+fmt(v)).join(" \u00b7 "):"")}
-function tloop(){if(T.s=="run"){$("#tm").textContent=fmt(performance.now()-T.t0);requestAnimationFrame(tloop)}}
+function tloop(){if(T.s=="run"){tmSet(fmt(performance.now()-T.t0));requestAnimationFrame(tloop)}}
 // hold-to-split: the clock stops while you hold (and during the optional wait), then continues
-function tpause(){const now=performance.now();T.pa=now;T.sp.push(now-T.t0);T.s="pause";$("#tm").textContent=fmt(now-T.t0);tphase();$("#hint").textContent="Paused \u00b7 release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")}
+function tpause(){const now=performance.now();T.pa=now;T.sp.push(now-T.t0);T.s="pause";tmSet(fmt(now-T.t0));tphase();$("#hint").textContent="Paused \u00b7 release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")}
 function trwait(){T.s="rwait";T.rw=performance.now();(function l(){if(T.s!="rwait")return;const r=ST.rd-(performance.now()-T.rw)/1000;if(r<=0)return tresume();$("#hint").textContent=`Continuing in ${Math.ceil(r)}\u2026 (press to skip)`;requestAnimationFrame(l)})()}
 function tresume(){T.t0+=performance.now()-T.pa;T.s="run";tphase();$("#hint").textContent=tHint();tloop()}
 function tsplit(){const P=ST.split?phs():[];if(P.length>1&&T.sp.length<P.length-1){T.sp.push(performance.now()-T.t0);tphase();return}tstop()}
 function tstop(){const t=performance.now()-T.t0,P=ST.split?phs():[],r={t:t+(T.pen==2?2000:0),s:T.scr};if(T.pen)r.pen=T.pen;if(P.length>1){r.sp=[...T.sp,t].map(Math.round);r.ph=P.slice(0,r.sp.length)}
-T.s="wait";tfocus(0);times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();$("#tm").textContent=ftime(r);$("#hint").textContent=hint0()}
-function tcancel(){if(!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);const m=$("#tm");if(m)m.textContent="0.00";tphase();const h=$("#hint");if(h)h.textContent=hint0()}
-function tpen(id){const L=times[times.length-1];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}ls.set("cl_t",times);stats();$("#tm").textContent=ftime(L)}
+T.s="wait";tfocus(0);times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();tmSet(ftime(r),dlt());$("#hint").textContent=hint0()}
+function tcancel(){if(!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);tmSet("0.00");tphase();const h=$("#hint");if(h)h.textContent=hint0()}
+function tpen(id){const L=times[times.length-1];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}ls.set("cl_t",times);stats();tmSet(ftime(L),dlt())}
 
 /* ---------- TRAINER ---------- */
 let TR={set:"All",cur:null,ok:0,n:0,rev:false,t0:0,run:false};
@@ -329,23 +350,24 @@ e.innerHTML=h}
 function qAct(t){const k=t.dataset.q;if(k=="n")return pqNew();if(k=="w"){qq(async()=>{PQ.api.set(PQ.sc.st);for(const m of PQ.sc.f.split(" "))await PQ.api.go(m)});return}PQ.ans=+k;pqShow()}
 const vPred=()=>`<div class="card"><h3>Practice: predict the edges</h3><p class="mu">Drag the cube. The last F2L pair (front-right slot) is not in yet. Decide how many last-layer edges will be yellow on top after you insert it with R and U moves.</p><canvas id="qc" class="cb" width="600" height="600"></canvas><div id="pq"></div></div>`;
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#xs,#blp");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
 if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
-if(t.id=="xc")return tcancel();if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
+if(t.id=="bset"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
 document.addEventListener("input",e=>{if(e.target.id=="q")fill()});
 document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.value;nextCase()}});
 const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
-document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape")return tcancel();if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
+document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape"){const q=$("#setpop");if(q&&!q.hidden){q.hidden=true;return}return tcancel()}if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
 document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"&&!inField()){e.preventDefault();tup()}});
-document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;if(T.s=="run"||T.s=="rwait")return tdown();
+document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;const sp=$("#setpop");if(sp&&!sp.hidden&&!e.target.closest("#setpop,#bset")){sp.hidden=true;return}if(T.s=="run"||T.s=="rwait")return tdown();
 if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb")))tdown()});
 document.addEventListener("pointerup",()=>tup());
+let rzt;addEventListener("resize",()=>{clearTimeout(rzt);rzt=setTimeout(()=>{if(tab=="timer"&&!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s)&&isDesk()!=CS())render()},200)});
 document.addEventListener("pointercancel",()=>{if(T.s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0)}else if(T.s=="tap")T.s="idle";else if(T.s=="pause")tup()});
 document.addEventListener("change",e=>{const i=e.target.id;if(tab!="timer"||!["si","sic","sf","sa","ss","sp","spc","sm","rd"].includes(i))return;const v=e.target.value;
 if(i=="si"){if(v=="c"){$("#sic").style.display="";ST.insp=Math.max(1,Math.min(120,+$("#sic").value||15));$("#sic").value=ST.insp}else{ST.insp=+v;$("#sic").style.display="none"}}
