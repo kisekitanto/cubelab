@@ -108,3 +108,37 @@ body.tfocus.cs #sub,body.tfocus.cs #res{display:none}
 .lpb{display:flex;gap:6px;padding:6px;border-top:1px solid #555}.lpb button{flex:1;background:#2a2a2a;color:#ddd;border:1px solid #666;border-radius:4px;padding:4px;cursor:pointer;font:inherit}
 #snp{position:fixed;right:6px;bottom:6px;width:min(230px,20vw);background:#1a1a1a;border:1px solid #666;border-radius:5px;padding:6px;z-index:20}
 #setpop{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:min(560px,92vw);max-height:92vh;overflow:auto;background:#222;border:1px solid #777;border-radius:10px;padding:14px 16px;z-index:90;box-shadow:0 10px 40px #000}#setpop[hidden]{display:none}
+
+/* stats under the timer now sit at the bottom so the scramble bar and pop-ups never cover them */
+body.cs #sub{position:absolute;bottom:76px;left:0;right:0;margin:0;display:flex;justify-content:center;gap:2.2em;font-size:clamp(1.3rem,2.3vw,2.1rem);line-height:1.2}
+body.cs #res{position:absolute;bottom:34px;left:0;right:0;margin:0}
+body.cs #hint{bottom:10px}
+body.cs #cx{max-height:calc(100vh - 220px);overflow:auto}
+
+/* per-step averages (F2L / OLL / PLL ...) live at the bottom now, not at the top under the scramble */
+body.cs #sub{bottom:104px}
+
+/* bottom stack under the timer: ao5/ao12, +2/DNF, per-step averages, hint (never covers the scramble bar) */
+body.cs #bt{position:absolute;left:27vw;right:22vw;bottom:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+body.cs #bt #sub{position:static;width:100%}
+body.cs #bt #res{position:static;width:100%}
+body.cs #bt #hint{position:static}
+body.cs #bt #pst{background:none;border:0;box-shadow:none;padding:0;margin:0;width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 18px;text-align:center}
+body.cs #bt #pst[hidden]{display:none}
+body.cs #pst h3,body.cs #pst .bar{display:none}
+body.cs #pst .mu{font-size:1.05rem;color:#bbb}body.cs #pst .mu b{color:#fff}
+body.tfocus.cs #pst{display:none}
+
+/* the stack now sits directly under the big time (timer stays centered) */
+body.cs #bt{position:absolute;left:27vw;right:22vw;top:calc(50% + clamp(3rem,7.4vw,7.4rem));bottom:auto;gap:8px}
+body.cs #bt #pst{order:1}body.cs #bt #sub{order:2}body.cs #bt #res{order:3}body.cs #bt #hint{order:4;margin-top:4px}
+
+/* breakdown row: part of the normal flow right under the time, limited to the space between the side panels, items never split */
+body.cs #tz{padding:0 27vw}
+body.cs #bt{position:static;left:auto;right:auto;top:auto;bottom:auto;width:100%;margin-top:1.5vh;gap:8px}
+body.cs #pst{justify-content:center}
+body.cs #pst .mu{white-space:nowrap}
+
+body.cs #tz{padding:0 calc(min(300px,26vw) + 16px)}
+body.cs #pst{gap:2px 14px}body.cs #pst .mu{font-size:.95rem}
+body.cs #pst .mu{font-size:clamp(.78rem,1.1vw,.95rem)}body.cs #pst{gap:2px 12px}

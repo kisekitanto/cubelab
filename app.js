@@ -226,7 +226,7 @@ $("#stg").innerHTML=`<table class="cst"><tr><th></th><th>current</th><th>best</t
 const pm=j=>{const q=times.filter(x=>x.sp&&x.sp.length>j).map(x=>deltas(x)[j]);return q.length?q.reduce((a,b)=>a+b,0)/q.length:null};
 let h=`<tr><td colspan="4" class="sm">solve: ${fin.length}/${times.length}<br>mean: ${fm(mean)}</td>`+Array.from({length:ph},(_,j)=>`<td>${fm(pm(j))}</td>`).join("")+`</tr><tr><th>p</th><th>time</th><th>ao5</th><th>ao12</th>`+Array.from({length:ph},(_,j)=>`<th>P.${j+1}</th>`).join("")+`</tr>`;
 for(let i=times.length-1;i>=Math.max(0,times.length-80);i--){const x=times[i],a=v.slice(0,i+1);h+=`<tr title="${x.s}"><td>${i+1}</td><td>${ftime(x)}</td><td>${fm(aoN(a,5))}</td><td>${fm(aoN(a,12))}</td>`+Array.from({length:ph},(_,j)=>`<td>${x.sp&&x.sp.length>j?fmt(deltas(x)[j]):"-"}</td>`).join("")+`</tr>`}
-$("#hist").innerHTML=h;const a5=aoN(v,5),a12=aoN(v,12);$("#sub").innerHTML=(a5!=null?`ao5: ${fmt(a5)}<br>`:"")+(a12!=null?`ao12: ${fmt(a12)}`:"")}
+$("#hist").innerHTML=h;const a5=aoN(v,5),a12=aoN(v,12);$("#sub").innerHTML=(a5!=null?`<span>ao5: ${fmt(a5)}</span>`:"")+(a12!=null?`<span>ao12: ${fmt(a12)}</span>`:"")}
 function stats(){const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
 if(CS())statsCs();else{e.innerHTML=[["Best",fmt(b)],["Mean",fmt(m)],["Ao5",fmt(avg(5))],["Ao12",fmt(avg(12))],["Solves",times.length]].map(([l,v])=>`<div class="st"><span class="mu">${l}</span><b>${v}</b></div>`).join("");
 $("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${ftime(x)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}${x.sp?"<br>"+deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · "):""}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
@@ -238,8 +238,8 @@ for(const s of S){const f=Object.keys(FNm).find(q=>FNm[q].join()==s.n.join()),p=
 o+=`<rect x="${(off[f][0]+c)*13+2}" y="${(off[f][1]+r)*13+2}" width="12" height="12" fill="${col[s.c]}" stroke="#000"/>`}return `<svg viewBox="0 0 160 121" width="100%" aria-label="Scramble preview">${o}</svg>`}
 function vTimerDesk(){return `<div id="csbtn"><button class="cb2" id="bset" title="Timer settings">⚙</button><button class="cb2" id="blp" title="Show or hide the solves">📊</button></div><div id="clogo">CubeLab</div>
 <div id="csbar"><div class="tl">WCA · 3x3x3 · <button id="rp">last</button>/<button id="ns">next</button> scramble · <button id="sv">☆</button> <button id="cb" title="Fastest cross">🎯</button> <span id="su" class="mu"></span></div><p id="sc"></p></div><div id="cx" class="card" hidden></div>
-<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tmw"><div id="tm">0.00</div><span id="dlt"></span></div><div id="ph" class="phl"></div><div id="sub"></div><div id="res" class="card" hidden></div><div class="mu" id="hint">${hint0()}</div></div>
-<div id="lp"><div id="stg"></div><div id="sol"><table id="hist"></table></div><div class="lpb"><button id="dl">Delete last</button><button id="ca">Clear all</button></div></div><div id="snp"></div><div id="pst" hidden></div>
+<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tmw"><div id="tm">0.00</div><span id="dlt"></span></div><div id="ph" class="phl"></div><div id="bt"><div id="sub"></div><div id="res" class="card" hidden></div><div id="pst" hidden></div><div class="mu" id="hint">${hint0()}</div></div></div>
+<div id="lp"><div id="stg"></div><div id="sol"><table id="hist"></table></div><div class="lpb"><button id="dl">Delete last</button><button id="ca">Clear all</button></div></div><div id="snp"></div>
 <div id="setpop" hidden><div class="sch"><b>⚙ Timer settings</b><button class="mb" id="xs">✕ Close</button></div>${setHtml()}</div>`}
 // ---- timer state machine: idle > (tap) > insp > hold > ready > run > wait ----
 const tz=()=>$("#tz"),cls=c=>{const e=tz();if(e)e.className=c},tfocus=on=>{const b=document.body;if(b)b.classList.toggle("tfocus",!!on&&!!ST.focus)};
@@ -364,7 +364,7 @@ document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.val
 const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
 document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape"){const q=$("#setpop");if(q&&!q.hidden){q.hidden=true;return}return tcancel()}if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
 document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"&&!inField()){e.preventDefault();tup()}});
-document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;const sp=$("#setpop");if(sp&&!sp.hidden&&!e.target.closest("#setpop,#bset")){sp.hidden=true;return}if(T.s=="run"||T.s=="rwait")return tdown();
+document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;const sp=$("#setpop");if(sp&&!sp.hidden&&!e.target.closest("#setpop,#bset")){sp.hidden=true;return}const cxp=$("#cx");if(CS()&&cxp&&!cxp.hidden&&!e.target.closest("#cx,#cb")){cxp.hidden=true;return}if(T.s=="run"||T.s=="rwait")return tdown();
 if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb")))tdown()});
 document.addEventListener("pointerup",()=>tup());
 let rzt;addEventListener("resize",()=>{clearTimeout(rzt);rzt=setTimeout(()=>{if(tab=="timer"&&!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s)&&isDesk()!=CS())render()},200)});
