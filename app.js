@@ -90,8 +90,8 @@ if(ED.i==-2){if(v==id)delete UO[id];else UO[id]=v;ls.set("cl_uo",UO);setMain(id,
 else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[ED.i]=v;ls.set("cl_ua",UX)}
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
-const IC={timer:"⏱",scr:"🔀",learn:"🎓",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
-function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:"new scramble";const b=$("#sv");if(b)b.textContent=CS()?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
+const IC={timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
+function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:(MB()?"":"new scramble");const b=$("#sv");if(b)b.textContent=(CS()||MB())?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
 function vScr(){const c={};times.forEach(x=>c[x.s]=(c[x.s]||0)+1);const many=Object.keys(c).filter(s=>c[s]>1).sort((a,b)=>c[b]-c[a]).slice(0,20);
@@ -172,13 +172,13 @@ const ALL=[];for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>A
 const inv=a=>a.split(" ").reverse().map(x=>x.endsWith("'")?x.slice(0,-1):x.endsWith("2")?x:x+"'").join(" ");
 
 /* ---------- STATE ---------- */
-const TABS=[["timer","Timer"],["scr","Scrambles"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
+const TABS=[["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
 let tab="timer",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.get("cl_w",{}),T={s:"idle",t0:0,hold:0,scr:""};
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){document.body.classList.toggle("cs",tab=="timer"&&isDesk());$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimer(),trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit()}if(tab=="trainer")nextCase()}
+function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,prog:vProg,sync:vSync,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -196,7 +196,7 @@ const val=x=>x.pen=="DNF"?Infinity:x.t,ftime=x=>x.pen=="DNF"?"DNF":fmt(x.t)+(x.p
 const avg=n=>{if(times.length<n)return null;const a=times.slice(-n).map(val).sort((x,y)=>x-y).slice(1,-1);return a.reduce((x,y)=>x+y,0)/a.length};
 function scr(n=20){const F="UDLRFB",ax={U:0,D:0,L:1,R:1,F:2,B:2};let r=[],l="";while(r.length<n){const f=F[Math.random()*6|0];if(l&&ax[f]==ax[l])continue;l=f;r.push(f+["","'","2"][Math.random()*3|0])}return r.join(" ")}
 function newScr(s){T.scr=s||scr();const e=$("#sc");if(e)e.textContent=T.scr;const c=$("#cx");if(c)c.hidden=true;scInfo();const n=$("#snp");if(n)n.innerHTML=snetSvg(T.scr)}
-const hint0=()=>(ST.insp?`Tap to start ${ST.insp}s inspection, then hold and release to solve`:"Hold Space or press and hold, release when green")+(ST.any?" · tap anywhere":"");
+const hint0=()=>MB()?(ST.insp?`Tap anywhere to start ${ST.insp}s inspection, then press and hold`:"Press and hold anywhere, release when green"):(ST.insp?`Tap to start ${ST.insp}s inspection, then hold and release to solve`:"Hold Space or press and hold, release when green")+(ST.any?" · tap anywhere":"");
 const tHint=()=>ST.split&&phs().length>1?(ST.sm=="hold"?"Hold Space or touch to pause and see the step time, release to continue"+(ST.rd?` (after ${ST.rd}s)`:"")+" \u00b7 on the last step, press to stop":"Tap at the end of each step"):"Tap or press any key to stop";
 const setHtml=()=>`
 <div class="sr"><label for="si">Inspection</label><select id="si"><option value="0">None</option><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="c">Custom…</option></select><input id="sic" type="number" min="1" max="120" style="width:84px;display:none"></div>
@@ -225,9 +225,9 @@ const def=[["time",1,a=>a[a.length-1]],["mo3",3,moN],["ao5",5,aoN],["ao12",12,ao
 $("#stg").innerHTML=`<table class="cst"><tr><th></th><th>current</th><th>best</th></tr>`+def.map(([n,k,f])=>`<tr><th>${n}</th><td>${fm(f(v,k))}</td><td>${fm(n=="time"?(fin.length?Math.min(...fin):null):bestOf(v,k,f))}</td></tr>`).join("")+`</table>`;
 const pm=j=>{const q=times.filter(x=>x.sp&&x.sp.length>j).map(x=>deltas(x)[j]);return q.length?q.reduce((a,b)=>a+b,0)/q.length:null};
 let h=`<tr><td colspan="4" class="sm">solve: ${fin.length}/${times.length}<br>mean: ${fm(mean)}</td>`+Array.from({length:ph},(_,j)=>`<td>${fm(pm(j))}</td>`).join("")+`</tr><tr><th>p</th><th>time</th><th>ao5</th><th>ao12</th>`+Array.from({length:ph},(_,j)=>`<th>P.${j+1}</th>`).join("")+`</tr>`;
-for(let i=times.length-1;i>=Math.max(0,times.length-80);i--){const x=times[i],a=v.slice(0,i+1);h+=`<tr title="${x.s}"><td>${i+1}</td><td>${ftime(x)}</td><td>${fm(aoN(a,5))}</td><td>${fm(aoN(a,12))}</td>`+Array.from({length:ph},(_,j)=>`<td>${x.sp&&x.sp.length>j?fmt(deltas(x)[j]):"-"}</td>`).join("")+`</tr>`}
+for(let i=times.length-1;i>=Math.max(0,times.length-80);i--){const x=times[i],a=v.slice(0,i+1);h+=`<tr data-si="${i}" title="${esc(x.s)}"><td>${i+1}</td><td>${ftime(x)}</td><td>${fm(aoN(a,5))}</td><td>${fm(aoN(a,12))}</td>`+Array.from({length:ph},(_,j)=>`<td>${x.sp&&x.sp.length>j?fmt(deltas(x)[j]):"-"}</td>`).join("")+`</tr>`}
 $("#hist").innerHTML=h;const a5=aoN(v,5),a12=aoN(v,12);$("#sub").innerHTML=(a5!=null?`<span>ao5: ${fmt(a5)}</span>`:"")+(a12!=null?`<span>ao12: ${fmt(a12)}</span>`:"")}
-function stats(){const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
+function stats(){if(MB()&&$("#mst"))return statsMob();const e=$("#stg");if(!e)return;const fin=times.map(val).filter(isFinite),b=fin.length?Math.min(...fin):null,m=fin.length?fin.reduce((x,y)=>x+y,0)/fin.length:null;
 if(CS())statsCs();else{e.innerHTML=[["Best",fmt(b)],["Mean",fmt(m)],["Ao5",fmt(avg(5))],["Ao12",fmt(avg(12))],["Solves",times.length]].map(([l,v])=>`<div class="st"><span class="mu">${l}</span><b>${v}</b></div>`).join("");
 $("#hist").innerHTML=times.slice(-12).reverse().map((x,i)=>`<tr><td class="mu">${times.length-i}</td><td><b>${ftime(x)}</b></td><td class="mu" style="font-family:ui-monospace,monospace;font-size:.8rem">${x.s}${x.sp?"<br>"+deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · "):""}</td></tr>`).join("")||`<tr><td class="mu">No solves yet.</td></tr>`}
 const L=times[times.length-1],r=$("#res");r.hidden=!L;if(L)r.innerHTML=`<div class="sch"><h3>Last solve: ${ftime(L)}</h3><span><button class="mb" id="p2">${L.pen==2?"Remove +2":"+2"}</button><button class="mb" id="pd">${L.pen=="DNF"?"Undo DNF":"DNF"}</button></span></div>${L.sp?bars(deltas(L),L.ph):""}`;
@@ -244,12 +244,12 @@ function vTimerDesk(){return `<div id="csbtn"><button class="cb2" id="bset" titl
 // ---- timer state machine: idle > (tap) > insp > hold > ready > run > wait ----
 const tz=()=>$("#tz"),cls=c=>{const e=tz();if(e)e.className=c},tfocus=on=>{const b=document.body;if(b)b.classList.toggle("tfocus",!!on&&!!ST.focus)};
 function thold(){T.s="hold";tfocus(1);cls("hold");T.hold=setTimeout(()=>{if(T.s=="hold"){T.s="ready";cls("ready")}},300)}
-function tdown(){if(tab!="timer"||!tz())return;const sp=$("#setpop");if(sp&&!sp.hidden)return;const s=T.s;if(s=="run")return ST.split&&ST.sm=="hold"&&phs().length>1&&T.sp.length<phs().length-1?tpause():tsplit();if(s=="rwait")return tresume();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
+function tdown(){if(tab!="timer"||!tz())return;const sdl=$("#sd");if(sdl&&!sdl.hidden)return;const sp=$("#setpop");if(sp&&!sp.hidden)return;const s=T.s;if(s=="run")return ST.split&&ST.sm=="hold"&&phs().length>1&&T.sp.length<phs().length-1?tpause():tsplit();if(s=="rwait")return tresume();if(s=="idle"){if(ST.insp>0){T.s="tap";return}T.o="n";return thold()}if(s=="insp"){T.o="i";thold()}}
 function tup(){if(tab!="timer"||!tz())return;const s=T.s;
 if(s=="tap"){T.s="insp";T.i0=performance.now();tfocus(1);$("#hint").textContent="Inspection \u00b7 hold to get ready, release to start \u00b7 Esc or \u2715 cancels";itick();return}
 if(s=="ready")return tgo();if(s=="pause")return ST.rd>0?trwait():tresume();if(s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0);return}if(s=="wait")T.s="idle"}
 function itick(){if(!T.i0||!["insp","hold","ready"].includes(T.s)||!$("#tm"))return;const el=(performance.now()-T.i0)/1000,r=ST.insp-el;tmSet(r>0?Math.ceil(r):el<ST.insp+2?"+2":"DNF");requestAnimationFrame(itick)}
-function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";cls("");tfocus(1);$("#hint").textContent=tHint();tphase();tloop()}
+function tgo(){const now=performance.now();T.pen=0;if(T.o=="i"&&T.i0){const el=(now-T.i0)/1000;T.pen=el>ST.insp+2?"DNF":el>ST.insp?2:0}T.i0=0;T.t0=now;T.sp=[];T.s="run";T.fresh=false;T.msg="";cls("");tfocus(1);$("#hint").textContent=tHint();tphase();tloop()}
 function tphase(){const e=$("#ph");if(!e)return;const P=ST.split?phs():[];if(P.length<2||!["run","pause","rwait"].includes(T.s)){e.innerHTML="";return}
 const n=T.sp.length,d=T.sp.map((v,i)=>v-(T.sp[i-1]||0)),nx=P[Math.min(n,P.length-1)];
 e.innerHTML=(T.s!="run"&&n?`<b>\u2714 ${P[n-1]}: ${fmt(d[n-1])}</b> \u00b7 next: ${nx}`:`<b>${nx}</b>`)+(n?"<br>"+d.map((v,i)=>P[i]+" "+fmt(v)).join(" \u00b7 "):"")}
@@ -259,10 +259,10 @@ function tpause(){const now=performance.now();T.pa=now;T.sp.push(now-T.t0);T.s="
 function trwait(){T.s="rwait";T.rw=performance.now();(function l(){if(T.s!="rwait")return;const r=ST.rd-(performance.now()-T.rw)/1000;if(r<=0)return tresume();$("#hint").textContent=`Continuing in ${Math.ceil(r)}\u2026 (press to skip)`;requestAnimationFrame(l)})()}
 function tresume(){T.t0+=performance.now()-T.pa;T.s="run";tphase();$("#hint").textContent=tHint();tloop()}
 function tsplit(){const P=ST.split?phs():[];if(P.length>1&&T.sp.length<P.length-1){T.sp.push(performance.now()-T.t0);tphase();return}tstop()}
-function tstop(){const t=performance.now()-T.t0,P=ST.split?phs():[],r={t:t+(T.pen==2?2000:0),s:T.scr};if(T.pen)r.pen=T.pen;if(P.length>1){r.sp=[...T.sp,t].map(Math.round);r.ph=P.slice(0,r.sp.length)}
-T.s="wait";tfocus(0);times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();tmSet(ftime(r),dlt());$("#hint").textContent=hint0()}
+function tstop(){const t=performance.now()-T.t0,P=ST.split?phs():[],r={t:t+(T.pen==2?2000:0),s:T.scr,d:Date.now()};if(T.pen)r.pen=T.pen;if(P.length>1){r.sp=[...T.sp,t].map(Math.round);r.ph=P.slice(0,r.sp.length)}
+T.s="wait";tfocus(0);{const pb=Math.min(...times.map(val).filter(isFinite));T.msg=r.pen!="DNF"&&times.length&&isFinite(pb)&&r.t<pb?`Congratulations! You've just beaten your previous personal best by ${fmt(pb-r.t)}`:"";T.fresh=true}times.push(r);ls.set("cl_t",times);T.last=T.scr;newScr();stats();tphase();tmSet(ftime(r),dlt());$("#hint").textContent=hint0()}
 function tcancel(){if(!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s))return;clearTimeout(T.hold);T.s="idle";T.i0=0;cls("");tfocus(0);tmSet("0.00");tphase();const h=$("#hint");if(h)h.textContent=hint0()}
-function tpen(id){const L=times[times.length-1];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}ls.set("cl_t",times);stats();tmSet(ftime(L),dlt())}
+function tpen(id,i){i=i==null?times.length-1:i;const L=times[i];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}L.m=Date.now();saveT();stats();if(i==times.length-1&&T.s!="run")tmSet(ftime(L),dlt())}
 
 /* ---------- TRAINER ---------- */
 let TR={set:"All",cur:null,ok:0,n:0,rev:false,t0:0,run:false};
@@ -349,33 +349,125 @@ else h=`<p class="${PQ.ans==n?"ok":"bad"}"><b>${PQ.ans==n?"\u2713 Correct!":"\u2
 e.innerHTML=h}
 function qAct(t){const k=t.dataset.q;if(k=="n")return pqNew();if(k=="w"){qq(async()=>{PQ.api.set(PQ.sc.st);for(const m of PQ.sc.f.split(" "))await PQ.api.go(m)});return}PQ.ans=+k;pqShow()}
 const vPred=()=>`<div class="card"><h3>Practice: predict the edges</h3><p class="mu">Drag the cube. The last F2L pair (front-right slot) is not in yet. Decide how many last-layer edges will be yellow on top after you insert it with R and U moves.</p><canvas id="qc" class="cb" width="600" height="600"></canvas><div id="pq"></div></div>`;
+/* ---------- MOBILE TIMER, SOLVES, PROGRESS, BACKUP & SYNC ---------- */
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const MOBT=["timer","hist","prog"],MB=()=>!!(document.body&&document.body.classList.contains("mob")),saveT=()=>ls.set("cl_t",times);
+const fdate=d=>d?new Date(d).toLocaleString([],{dateStyle:"medium",timeStyle:"short"}):"older solve (no date)";
+const mnav=()=>`<div id="mnav">${[["timer","⏱","Timer"],["hist","🗂","Solves"],["prog","📈","Progress"]].map(([k,i,l])=>`<button data-t="${k}" class="${tab==k?"on":""}"><span>${i}</span><small>${l}</small></button>`).join("")}<button id="mmore"><span>☰</span><small>More</small></button></div>`;
+const mhead=t=>`<div id="mbar"><span style="width:42px"></span><div class="mtitle"><b>${t}</b></div><button class="ib" id="mmenu" aria-label="Menu">☰</button></div>`;
+function vTimerMob(){return `<div id="mbar"><button class="ib" id="bset" aria-label="Timer settings">⚙</button><div class="mtitle" id="bset2"><b>3x3 Cube ▾</b><small id="msub"></small></div><button class="ib" id="mmenu" aria-label="Menu">☰</button></div>
+<p id="sc"></p><div class="mrow"><button class="ib" id="cb" title="Fastest cross">💡</button><span class="mu" id="su"></span><span><button class="ib" id="sv" title="Save scramble">☆</button><button class="ib" id="rp" title="Do it again">↻</button><button class="ib" id="ns" title="New scramble">🔀</button></span></div><div id="cx" class="card" hidden></div>
+<div id="msg"></div>
+<div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tmw"><div id="tm">0.00</div><span id="dlt"></span></div><div id="ph" class="phl"></div><div id="pst" hidden></div><div id="res"></div><div class="mu" id="hint">${hint0()}</div></div>
+<div id="mfoot"><div id="mst"></div><div id="snp"></div><div id="mao"></div></div>${mnav()}
+<div id="setpop" hidden><div class="sch"><b>⚙ Timer settings</b><button class="mb" id="xs">✕ Close</button></div>${setHtml()}</div>`}
+function msubSet(){const m=$("#msub");if(m)m.textContent=(ST.insp?`Inspection ${ST.insp}s`:"No inspection")+(ST.split?` · ${ST.pre} splits`:"")}
+function statsMob(){const v=times.map(val),fin=v.filter(isFinite),n=fin.length,fm=x=>x==null?"--":fmt(x),mean=n?fin.reduce((a,b)=>a+b,0)/n:null,sd=n>1?Math.sqrt(fin.reduce((a,b)=>a+(b-mean)**2,0)/n):null,L=times[times.length-1];
+$("#mst").innerHTML=`Deviation: ${fm(sd)}<br>Mean: ${fm(mean)}<br>Best: ${fm(n?Math.min(...fin):null)}<br>Count: ${times.length}`;
+let nb=false;if(T.fresh)for(const k of [5,12,50,100]){const c=aoN(v,k);if(c!=null&&isFinite(c)){const pb=bestOf(v.slice(0,-1),k,aoN);if(pb==null||c<pb)nb=true}}
+$("#mao").innerHTML=(nb?`<span class="newb">New average best!</span>`:"")+[5,12,50,100].map(k=>`<div class="${k==5?"b":""}">Ao${k}: ${fm(aoN(v,k))}</div>`).join("");
+$("#msg").innerHTML=T.fresh&&T.msg?T.msg:"";
+$("#res").innerHTML=L?`<button class="rb del" id="mdel" title="Delete this solve">✕</button><span class="pl"><button id="pd" class="${L.pen=="DNF"?"on":""}" title="DNF">⊘</button><button id="p2" class="${L.pen==2?"on":""}" title="+2">⚑</button></span><button class="rb" id="mnote" title="See the scramble and add a description">📝</button>`:"";
+const K=L&&L.sp?L.ph.join("|"):null,S=K?times.filter(x=>x.sp&&x.ph.join("|")==K).slice(-12):[],p=$("#pst");p.hidden=S.length<2;
+if(S.length>1){const d=L.ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length);p.innerHTML=bars(d,L.ph)}}
+function mdel(t){if(t.dataset.c){times.pop();saveT();T.fresh=false;T.msg="";stats();tmSet("0.00");return}t.dataset.c="1";t.textContent="?";setTimeout(()=>{if(t.isConnected){t.dataset.c="";t.textContent="✕"}},2200)}
+/* ---- one solve: scramble, date, description, penalties ---- */
+let SI=-1;
+function solveDlg(i){const x=times[i];if(!x)return;SI=i;$("#sd").hidden=false;$("#sdt").textContent=`#${i+1} · ${ftime(x)}`;$("#sdi").textContent=fdate(x.d);$("#sds").textContent=x.s;$("#sds").dataset.c=x.s;
+$("#sdp").innerHTML=x.sp?bars(deltas(x),x.ph):"";$("#sdn").value=x.n||"";$("#sd2").textContent=x.pen==2?"Remove +2":"+2 penalty";$("#sdd").textContent=x.pen=="DNF"?"Undo DNF":"DNF";const r=$("#sdr");r.textContent="🗑 Delete";r.dataset.c=""}
+function sdRefresh(){stats();if(tab=="hist")histFill()}
+function sdClose(){const x=times[SI];$("#sd").hidden=true;if(x&&$("#sdn").value!=(x.n||"")){x.n=$("#sdn").value.trim();x.m=Date.now();if(!x.n)delete x.n;saveT()}sdRefresh()}
+function sdWire(){$("#sdx").onclick=sdClose;$("#sd2").onclick=()=>{tpen("p2",SI);solveDlg(SI);sdRefresh()};$("#sdd").onclick=()=>{tpen("pd",SI);solveDlg(SI);sdRefresh()};
+$("#sdu").onclick=()=>{const x=times[SI];if(!x)return;sdClose();go("timer");newScr(x.s)};
+$("#sdr").onclick=e=>{const b=e.currentTarget;if(b.dataset.c){times.splice(SI,1);saveT();$("#sd").hidden=true;sdRefresh();if(tab=="timer")tmSet("0.00");return}b.dataset.c="1";b.textContent="Tap again to delete"};
+$("#sdn").oninput=()=>{const x=times[SI];if(!x)return;x.n=$("#sdn").value;x.m=Date.now();saveT()}}
+/* ---- all solves ---- */
+let HQ="",HN=50;
+function vHist(){const c=`<div class="card"><h2>🗂 Solves</h2><p class="mu">Every solve you did, with its scramble. Tap one to read the scramble, add a description, or fix its penalty.</p><input id="hq" type="search" placeholder="Search notes, scrambles, times…" value="${esc(HQ)}"><div class="mu" id="hc"></div></div><div id="hl"></div>`;return (isDesk()?"":mhead("Solves"))+c+(isDesk()?"":mnav())}
+function histFill(){const q=HQ.toLowerCase(),L=$("#hl");if(!L)return;const idx=[];for(let i=times.length-1;i>=0;i--){const x=times[i];if(!q||(x.s+" "+(x.n||"")+" "+ftime(x)+" "+fdate(x.d)).toLowerCase().includes(q))idx.push(i)}
+$("#hc").textContent=`${idx.length} of ${times.length} solves`;
+L.innerHTML=idx.slice(0,HN).map(i=>{const x=times[i];return `<div class="hrow" data-si="${i}"><div class="hr1"><b>#${i+1}</b><span class="ht">${ftime(x)}</span><span class="mu">${fdate(x.d)}</span></div><div class="hs">${x.s}</div>${x.n?`<div class="hn">📝 ${esc(x.n)}</div>`:""}${x.sp?`<div class="mu">${deltas(x).map((v,j)=>x.ph[j]+" "+fmt(v)).join(" · ")}</div>`:""}</div>`}).join("")||`<p class="mu">No solves yet.</p>`;
+if(idx.length>HN)L.innerHTML+=`<button class="btn" id="hmore" style="width:100%">Show more (${idx.length-HN} left)</button>`}
+/* ---- progress chart ---- */
+function chart(){const N=Math.min(times.length,150);if(N<2)return `<p class="mu">Do a few solves to see your progress chart.</p>`;const all=times.map(val),base=times.length-N,v=all.slice(base),fin=v.filter(isFinite).sort((a,b)=>a-b);if(fin.length<2)return "";
+const lo=fin[0],hi=Math.min(fin[fin.length-1],(fin[Math.floor(fin.length*.95)]||fin[fin.length-1])*1.25),W=340,H=190,pl=40,pb=14,pt=8,sx=i=>pl+(W-pl-8)*(i/(N-1)),sy=x=>pt+(H-pt-pb)*(1-(Math.min(x,hi)-lo)/((hi-lo)||1));
+const line=k=>{let d="";for(let i=0;i<N;i++){const a=aoN(all.slice(0,base+i+1),k);if(a!=null&&isFinite(a))d+=(d?"L":"M")+sx(i).toFixed(1)+" "+sy(a).toFixed(1)}return d};
+let g="";for(let k=0;k<=3;k++){const y=pt+(H-pt-pb)*k/3,val_=hi-(hi-lo)*k/3;g+=`<line x1="${pl}" x2="${W-8}" y1="${y}" y2="${y}" stroke="currentColor" opacity=".18"/><text x="${pl-4}" y="${y+3}" text-anchor="end" font-size="9" fill="currentColor" opacity=".8">${fmt(val_)}</text>`}
+const dots=v.map((x,i)=>isFinite(x)?`<circle cx="${sx(i).toFixed(1)}" cy="${sy(x).toFixed(1)}" r="2.2" fill="currentColor" opacity=".55"/>`:"").join("");
+return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Solve times chart">${g}${dots}<path d="${line(12)}" fill="none" stroke="#ffd54a" stroke-width="2"/><path d="${line(5)}" fill="none" stroke="#7dffb0" stroke-width="2"/></svg><p class="mu" style="text-align:center">Last ${N} solves · <span style="color:#7dffb0">━ ao5</span> · <span style="color:#ffd54a">━ ao12</span> · dots = single solves</p>`}
+function vProg(){const v=times.map(val),fin=v.filter(isFinite),n=fin.length,fm=x=>x==null?"--":fmt(x),cur=v.length?v[v.length-1]:null;
+const rows=[["Single",cur,n?Math.min(...fin):null],["Mo3",moN(v,3),bestOf(v,3,moN)],["Ao5",aoN(v,5),bestOf(v,5,aoN)],["Ao12",aoN(v,12),bestOf(v,12,aoN)],["Ao50",aoN(v,50),bestOf(v,50,aoN)],["Ao100",aoN(v,100),bestOf(v,100,aoN)]];
+const mean=n?fin.reduce((a,b)=>a+b,0)/n:null,sd=n>1?Math.sqrt(fin.reduce((a,b)=>a+(b-mean)**2,0)/n):null,dnf=v.length-n;
+const sp=times.filter(x=>x.sp).slice(-50),K=sp.length?sp[sp.length-1].ph.join("|"):null,S=K?sp.filter(x=>x.ph.join("|")==K):[];
+const sb=S.length>1?`<div class="card"><h3>Average per step (last ${S.length} split solves)</h3>${bars(sp[sp.length-1].ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length),sp[sp.length-1].ph)}</div>`:"";
+const c=`<div class="card"><h2>📈 Progress</h2>${chart()}</div><div class="card"><h3>Records</h3><table class="rt"><tr><th></th><th>current</th><th>best</th></tr>${rows.map(([a,b,c2])=>`<tr><th>${a}</th><td>${fm(b)}</td><td>${fm(c2)}</td></tr>`).join("")}</table><p class="mu">Solves: ${times.length} · DNF: ${dnf} · Mean: ${fm(mean)} · Deviation: ${fm(sd)}</p></div>${sb}`;
+return (isDesk()?"":mhead("Progress"))+c+(isDesk()?"":mnav())}
+/* ---- backup, restore and GitHub Gist sync ---- */
+const GH={tok:ls.get("cl_tok",""),gid:ls.get("cl_gid","")},FNB="cubelab-backup.json";
+const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_set:ST}});
+const tkeys=a=>{const seen={};return a.map(x=>{const k=x.d?x.d+"|"+x.s:"|"+x.s+"|"+x.t;seen[k]=(seen[k]||0)+1;return k+"#"+seen[k]})};
+function mergeTimes(a,b){const m=new Map(),ka=tkeys(a),kb=tkeys(b);a.forEach((x,i)=>m.set(ka[i],x));let add=0;b.forEach((y,i)=>{const x=m.get(kb[i]);if(!x){m.set(kb[i],y);add++}else if((y.m||y.d||0)>(x.m||x.d||0))m.set(kb[i],y)});const all=[...m.values()];return{list:[...all.filter(x=>!x.d),...all.filter(x=>x.d).sort((p,q)=>p.d-q.d)],add}}
+function reapplyUO(){for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>{c.a=UO[c.id]||c.id});ALL.forEach(x=>{x.a=UO[x.id]||x.id})}
+function mergeIn(inc,mode,withSet){const D=(inc&&inc.data)||{};if(!inc||inc.app!="cubelab"||!D.cl_t)throw new Error("This is not a CubeLab backup");let add=0;
+if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});add=times.length}
+else{const r=mergeTimes(times,D.cl_t);times=r.list;add=r.add;(D.cl_pin||[]).forEach(x=>{if(!PIN.includes(x))PIN.push(x)});(D.cl_done||[]).forEach(x=>{if(!LD.includes(x))LD.push(x)});
+for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k])}
+if(withSet&&D.cl_set){Object.assign(ST,D.cl_set);ssave()}
+saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);reapplyUO();return{add,total:times.length}}
+function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Everything you do (solves with scrambles and descriptions, saved scrambles, finished lessons, your edited algorithms) is stored in <b>this browser</b>. Use the tools below to keep a copy or to move it to another device.</p></div>
+<div class="card"><h3>1. Make a backup</h3><div class="row"><button class="btn pr" id="bkd">⬇ Download backup file</button><button class="btn" id="bkc">📋 Copy backup text</button></div><p class="mu" id="bkm">The file has all your data. Keep it somewhere safe (Drive, email to yourself, your GitHub repo).</p></div>
+<div class="card"><h3>2. Restore on this device</h3><p>Pick a backup file, or paste the backup text.</p><input type="file" id="bkf" accept=".json,application/json"><textarea id="bkt" rows="4" placeholder="…or paste the backup text here"></textarea>
+<div class="sr"><label><input type="radio" name="bkmode" value="merge" checked> Merge (keep what is here and add the new solves)</label></div><div class="sr"><label><input type="radio" name="bkmode" value="replace"> Replace everything on this device</label></div><div class="sr"><input type="checkbox" id="bks"><label for="bks">Also copy the timer settings</label></div><button class="btn pr" id="bki">Import</button><p class="mu" id="bkr"></p></div>
+<div class="card"><h3>3. Sync through GitHub (optional)</h3><p>Your data is kept in a <b>private gist</b> on your own GitHub account. Press <b>Sync now</b> on every device and they will all end up with the same solves.</p>
+<ol class="mu"><li>On GitHub: Settings → Developer settings → Personal access tokens → <b>Tokens (classic)</b> → Generate new token.</li><li>Tick only <b>gist</b>, create it and paste it below.</li><li>Press Sync now. On another device paste the same token and press Sync now there.</li></ol>
+<input id="gtk" type="password" placeholder="GitHub token (only the “gist” permission)" autocomplete="off"><input id="ggid" placeholder="Gist ID (filled in automatically)" autocomplete="off"><div class="row"><button class="btn pr" id="gsy">🔄 Sync now</button><button class="btn" id="gup">⬆ Upload only</button><button class="btn" id="gdn">⬇ Download only</button></div><div class="row" style="margin-top:8px"><button class="mb" id="gsv">Save token</button><button class="mb" id="gfo">Forget token</button></div><p class="mu" id="gms"></p><p class="mu">The token stays in this browser only. Anyone who can use this browser could use it, so give it only the gist permission. Sync needs internet and a normal website (it can be blocked inside some preview windows).</p></div>`}
+function syncInit(){$("#gtk").value=GH.tok;$("#ggid").value=GH.gid}
+async function gh(method,path,body){const r=await fetch("https://api.github.com"+path,{method,headers:{Authorization:"Bearer "+GH.tok,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error("GitHub answered "+r.status+(r.status==401?" (check the token)":r.status==403?" (the token needs the gist permission)":r.status==404?" (gist not found)":""));return r.json()}
+async function gPush(){const content=JSON.stringify(bkData());if(GH.gid)await gh("PATCH","/gists/"+GH.gid,{files:{[FNB]:{content}}});else{const g=await gh("POST","/gists",{description:"CubeLab backup",public:false,files:{[FNB]:{content}}});GH.gid=g.id;ls.set("cl_gid",g.id);$("#ggid").value=g.id}}
+async function gPull(){if(!GH.gid){const l=await gh("GET","/gists?per_page=100"),f=l.find(x=>x.files&&x.files[FNB]);if(!f)throw new Error("No CubeLab backup on this GitHub account yet");GH.gid=f.id;ls.set("cl_gid",f.id);$("#ggid").value=f.id}
+const g=await gh("GET","/gists/"+GH.gid),f=g.files&&g.files[FNB];if(!f)throw new Error("That gist has no "+FNB);let txt=f.content;if(f.truncated)txt=await(await fetch(f.raw_url)).text();return JSON.parse(txt)}
+async function syncAct(id){const msg=(el,t,ok)=>{const e=$(el);if(e){e.textContent=t;e.className=ok===false?"bad":ok?"ok":"mu"}};
+try{
+if(id=="bkd"){const j=JSON.stringify(bkData(),null,1),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([j],{type:"application/json"}));a.download="cubelab-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("#bkt").value=j;msg("#bkm","Backup file created. If nothing was downloaded, the text is in the box below: copy it into a file.",true)}
+else if(id=="bkc"){const j=JSON.stringify(bkData());$("#bkt").value=j;try{await navigator.clipboard.writeText(j);msg("#bkm","Copied! Paste it on the other device (Restore, paste box).",true)}catch(e){$("#bkt").select();msg("#bkm","Could not copy automatically. The text is in the box below: select it and copy.",null)}}
+else if(id=="bki"){const txt=$("#bkt").value.trim();if(!txt)throw new Error("Paste the backup text or choose a file first");const mode=(document.querySelector("input[name=bkmode]:checked")||{}).value||"merge";if(mode=="replace"&&!confirm("Replace everything on this device with the backup?"))return;
+const r=mergeIn(JSON.parse(txt),mode,$("#bks").checked);msg("#bkr",`Done: ${r.add} ${mode=="replace"?"solves loaded":"new solves added"}, ${r.total} solves in total.`,true)}
+else if(id=="gsv"||id=="gup"||id=="gdn"||id=="gsy"||id=="gfo"){
+if(id=="gfo"){GH.tok="";GH.gid="";ls.set("cl_tok","");ls.set("cl_gid","");syncInit();msg("#gms","Token and gist ID removed from this browser.",true);return}
+GH.tok=$("#gtk").value.trim();GH.gid=$("#ggid").value.trim();ls.set("cl_tok",GH.tok);ls.set("cl_gid",GH.gid);if(id=="gsv"){msg("#gms","Saved.",true);return}
+if(!GH.tok)throw new Error("Paste your GitHub token first");msg("#gms","Working…");let t="";
+if(id=="gdn"||id=="gsy"){try{const r=mergeIn(await gPull(),"merge",false);t+=`Downloaded: ${r.add} new solves. `}catch(e){if(id=="gdn"||!/No CubeLab backup/.test(e.message))throw e}}
+if(id=="gup"||id=="gsy"){await gPush();t+="Uploaded."}msg("#gms",t,true)}
+}catch(e){msg(id[0]=="b"&&id!="bkd"&&id!="bkc"?"#bkr":id[0]=="g"?"#gms":"#bkm",(e instanceof TypeError?"Could not reach GitHub (no internet, or this window blocks network access). ":"")+e.message,false)}}
+sdWire();
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#xs,#blp");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#bset2,#xs,#blp,[data-si],#mdel,#mnote,#mmenu,#mmore,#hmore,#bkd,#bkc,#bki,#gsy,#gup,#gdn,#gsv,#gfo");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
 if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
-if(t.id=="bset"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
+if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(/^(bkd|bkc|bki|gsy|gup|gdn|gsv|gfo)$/.test(t.id))return syncAct(t.id);if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
-document.addEventListener("input",e=>{if(e.target.id=="q")fill()});
+document.addEventListener("input",e=>{if(e.target.id=="q")fill();if(e.target.id=="hq"){HQ=e.target.value;HN=50;histFill()}});
 document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.value;nextCase()}});
+document.addEventListener("keydown",e=>{if(e.code=="Escape"){const d=$("#sd");if(d&&!d.hidden){e.preventDefault();sdClose()}}});
 const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
-document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape"){const q=$("#setpop");if(q&&!q.hidden){q.hidden=true;return}return tcancel()}if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
+document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape"){const sdl=$("#sd");if(sdl&&!sdl.hidden){sdClose();return}const q=$("#setpop");if(q&&!q.hidden){q.hidden=true;return}return tcancel()}if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
 document.addEventListener("keyup",e=>{if(tab=="timer"&&e.code=="Space"&&!inField()){e.preventDefault();tup()}});
-document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw"))return;const sp=$("#setpop");if(sp&&!sp.hidden&&!e.target.closest("#setpop,#bset")){sp.hidden=true;return}const cxp=$("#cx");if(CS()&&cxp&&!cxp.hidden&&!e.target.closest("#cx,#cb")){cxp.hidden=true;return}if(T.s=="run"||T.s=="rwait")return tdown();
-if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb")))tdown()});
+document.addEventListener("pointerdown",e=>{if(tab!="timer"||e.target.closest("#xc,#vw,#sd"))return;const sp=$("#setpop");if(sp&&!sp.hidden&&!e.target.closest("#setpop,#bset")){sp.hidden=true;return}const cxp=$("#cx");if(CS()&&cxp&&!cxp.hidden&&!e.target.closest("#cx,#cb")){cxp.hidden=true;return}if(T.s=="run"||T.s=="rwait")return tdown();
+if(e.target.closest("#tz")||(ST.any&&!e.target.closest("button,a,input,select,textarea,summary,label,header,nav,code,.mb,#lp,#csbar,#csbtn,#snp,#mnav,#mbar,#setpop,#cx")))tdown()});
 document.addEventListener("pointerup",()=>tup());
-let rzt;addEventListener("resize",()=>{clearTimeout(rzt);rzt=setTimeout(()=>{if(tab=="timer"&&!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s)&&isDesk()!=CS())render()},200)});
+let rzt;addEventListener("resize",()=>{clearTimeout(rzt);rzt=setTimeout(()=>{if(MOBT.includes(tab)&&!["tap","insp","hold","ready","run","pause","rwait"].includes(T.s)&&(CS()!=(tab=="timer"&&isDesk())||MB()!=(!isDesk())))render()},200)});
 document.addEventListener("pointercancel",()=>{if(T.s=="hold"){clearTimeout(T.hold);T.s=T.o=="i"?"insp":"idle";cls("");if(T.s=="idle")tfocus(0)}else if(T.s=="tap")T.s="idle";else if(T.s=="pause")tup()});
 document.addEventListener("change",e=>{const i=e.target.id;if(tab!="timer"||!["si","sic","sf","sa","ss","sp","spc","sm","rd"].includes(i))return;const v=e.target.value;
 if(i=="si"){if(v=="c"){$("#sic").style.display="";ST.insp=Math.max(1,Math.min(120,+$("#sic").value||15));$("#sic").value=ST.insp}else{ST.insp=+v;$("#sic").style.display="none"}}
 else if(i=="sic")ST.insp=Math.max(1,Math.min(120,+v||15));else if(i=="sf")ST.focus=e.target.checked?1:0;else if(i=="sa")ST.any=e.target.checked?1:0;else if(i=="ss")ST.split=e.target.checked?1:0;
 else if(i=="sm")ST.sm=v;else if(i=="rd")ST.rd=+v;else if(i=="sp"){ST.pre=v;$("#spc").style.display=v=="Custom"?"":"none"}else if(i=="spc")ST.ph=v.split(",").map(x=>x.trim()).filter(x=>x).slice(0,10);
-ssave();$("#spv").textContent="Steps: "+phs().join(" \u2192 ")+(ST.split?"":" (split times are off)");$("#hint").textContent=hint0()});
+ssave();$("#spv").textContent="Steps: "+phs().join(" \u2192 ")+(ST.split?"":" (split times are off)");$("#hint").textContent=hint0();msubSet()});
 addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h)&&h!=tab)go(h)});
 {const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h))tab=h;if(MT[tab])curM=MT[tab]}
 nav();render();
 $("#mb").onclick=()=>{$("#nav").hidden=!$("#nav").hidden};
-document.addEventListener("click",e=>{if(!e.target.closest("#nav,#mb"))$("#nav").hidden=true});
+document.addEventListener("click",e=>{if(!e.target.closest("#nav,#mb,#mmenu,#mmore"))$("#nav").hidden=true});

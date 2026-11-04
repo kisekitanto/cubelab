@@ -142,3 +142,54 @@ body.cs #pst .mu{white-space:nowrap}
 body.cs #tz{padding:0 calc(min(300px,26vw) + 16px)}
 body.cs #pst{gap:2px 14px}body.cs #pst .mu{font-size:.95rem}
 body.cs #pst .mu{font-size:clamp(.78rem,1.1vw,.95rem)}body.cs #pst{gap:2px 12px}
+
+/* ---------- solve dialog, solves list, progress, backup ---------- */
+#sd{position:fixed;inset:0;background:#000b;z-index:55;display:flex;align-items:center;justify-content:center;padding:12px}#sd[hidden]{display:none}
+.vc{background:var(--dlg,var(--cd))}
+textarea{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;width:100%;margin:6px 0;resize:vertical}
+#sds{margin:8px 0}
+.hrow{background:var(--cd);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;margin:8px 0;cursor:pointer}
+.hr1{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.hr1 .ht{font:800 1.25rem ui-monospace,Menlo,Consolas,monospace}
+.hs{font:600 .8rem/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-word;margin-top:4px;opacity:.9}.hn{margin-top:4px;font-style:italic}
+.rt{width:100%;border-collapse:collapse}.rt th{text-align:left}.rt td,.rt th{padding:5px 6px;border-top:1px solid var(--bd)}
+.sr input[type=radio]{width:auto;margin:0}.card input[type=file]{margin:6px 0}
+body.cs{--dlg:#202020}
+/* ---------- mobile timer (phones and tablets): blue app look ---------- */
+body.mob{--bg:#1f33f6;--cd:rgba(255,255,255,.14);--tx:#fff;--mu:#cfd3ff;--bd:rgba(255,255,255,.28);--ac:#ffe066;--ok:#8dffb8;--bad:#ffb3b3;--dlg:#2b1fd0;color:#fff;background:linear-gradient(180deg,#1b3cff 0%,#2a1fec 100%) fixed;color-scheme:dark}
+body.mob::before{display:none}
+body.mob header{position:static;height:0;padding:0;border:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none}body.mob header .hb{display:none}
+body.mob nav{position:fixed;top:76px;left:12px;right:12px;max-width:none;z-index:70;background:#2a15c8;border:1px solid rgba(255,255,255,.3);color:#fff;box-shadow:0 12px 40px #0008;max-height:70vh;overflow:auto}
+body.mob nav button{color:#fff}body.mob nav button.on{background:rgba(255,255,255,.16);color:#fff}
+body.mob main{max-width:560px;margin:0 auto;padding:10px 12px calc(96px + env(safe-area-inset-bottom,0px));min-height:100dvh;display:flex;flex-direction:column}
+body.mob select,body.mob input:not([type=checkbox]):not([type=radio]),body.mob textarea{color:#fff;background:rgba(0,0,0,.25)}body.mob select option{color:#000}
+body.mob .btn,body.mob .mb{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}body.mob .btn.pr{background:#ffe066;color:#1a1060;border-color:#ffe066}
+body.mob code.alg{background:rgba(0,0,0,.25);color:#fff;border-color:rgba(255,255,255,.25)}
+#mbar{display:flex;align-items:center;justify-content:space-between;background:#3a1de6;border-radius:22px;padding:8px 10px;box-shadow:0 4px 14px #0004;color:#fff}
+.ib{min-width:42px;height:38px;background:none;border:0;color:#fff;font-size:1.25rem;border-radius:10px;cursor:pointer}.ib:active{background:rgba(255,255,255,.15)}
+.mtitle{text-align:center;line-height:1.15;cursor:pointer}.mtitle b{font-size:1.1rem}.mtitle small{display:block;font-size:.72rem;color:#cfd3ff}
+body.mob #sc{font:700 1.05rem/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center;margin:14px 4px 4px;word-spacing:.3em;color:#fff}
+.mrow{display:flex;align-items:center;justify-content:space-between;min-height:42px}
+body.mob #cx{background:#2a15c8;border:1px solid rgba(255,255,255,.3);color:#fff;margin:6px 0}
+#msg{text-align:center;font-weight:700;font-size:.85rem;min-height:2.8em;margin:8px 10px 0;line-height:1.35}
+body.mob #tz{flex:1;min-height:36vh;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+body.mob #tmw{display:flex;align-items:baseline;gap:.2em}
+body.mob #tm{font:800 clamp(5rem,30vw,9rem)/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;letter-spacing:-.02em}
+body.mob #tm .td{font-size:.62em}body.mob #dlt{display:none}
+body.mob #tz.hold #tm{color:#ff8b8b}body.mob #tz.ready #tm{color:#8dffb8}
+body.mob #hint{color:#cfd3ff;font-size:.78rem;text-align:center;margin-top:10px;padding:0 10px}
+#res{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:16px;min-height:48px}
+#res .rb{width:48px;height:46px;border:0;border-radius:16px;background:#fff;color:#222;font-size:1.1rem;cursor:pointer}#res .rb.del{background:#ffbfae}
+#res .pl{display:inline-flex;background:#fff;border-radius:23px;overflow:hidden}#res .pl button{width:54px;height:46px;border:0;background:none;color:#222;font-size:1.1rem;cursor:pointer}#res .pl button.on{background:#ffe066}
+body.mob #pst{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px;margin-top:10px;width:100%}body.mob #pst[hidden]{display:none}
+body.mob #pst .bar{width:100%;height:7px}body.mob #pst .mu{font-size:.8rem;color:#e5e7ff;white-space:nowrap}
+#mfoot{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:8px;font-size:.72rem;font-weight:700;margin-top:10px;line-height:1.45}
+#mfoot #snp{position:static;width:112px;background:none;border:0;padding:0}
+#mao{text-align:right;position:relative;padding-top:26px}#mao .b{text-decoration:underline}
+.newb{position:absolute;top:0;right:0;background:#fff3a0;color:#4a3d00;border-radius:12px;padding:3px 10px;font-size:.68rem}
+#mnav{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);max-width:540px;margin:0 auto;display:flex;justify-content:space-around;background:#2d0fd6;border-radius:24px;padding:8px 6px;z-index:40;box-shadow:0 -2px 14px #0005}
+#mnav button{background:none;border:0;color:#aeb3ff;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:1.3rem;cursor:pointer;padding:2px 14px}#mnav button small{font-size:.65rem}#mnav button.on{color:#fff}
+body.mob #setpop{background:#2b1fd0;border-color:rgba(255,255,255,.35);top:10px}
+body.mob.tfocus #tz{background:linear-gradient(180deg,#1b3cff 0%,#2a1fec 100%)}
+body.mob .hrow{background:rgba(255,255,255,.12)}body.mob .card{box-shadow:none}
+
+.newb{white-space:nowrap}#mao{padding-top:30px}

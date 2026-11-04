@@ -29,6 +29,14 @@ Where to change things
   Timer ................ app.js, section TIMER (inspection, focus mode, splits).
                          Split style (tap or hold-to-pause) and the wait time are in the
                          timer settings. Step names: the PRE object. Settings are saved in the browser.
+  Phone timer look ..... style.css section "mobile timer" and vTimerMob() in app.js
+                         (phones and tablets: blue app layout with a bottom bar).
+  Solves / Progress .... app.js, vHist() and vProg(); one solve's dialog is solveDlg().
+  Backup & Sync ........ app.js, section "backup, restore and GitHub Gist sync":
+                         backup file / text, merge or replace, and a private gist
+                         on your GitHub account (needs a token with only the gist
+                         permission). Solves are merged by date + scramble, so
+                         nothing is duplicated.
   Desktop timer look ... style.css section "csTimer-style desktop timer" and vTimerDesk()
                          in app.js (wide screens with a mouse only; phones keep the
                          normal layout). The big digits use the Orbitron font from
