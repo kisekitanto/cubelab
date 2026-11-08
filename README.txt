@@ -29,6 +29,10 @@ Where to change things
   Timer ................ app.js, section TIMER (inspection, focus mode, splits).
                          Split style (tap or hold-to-pause) and the wait time are in the
                          timer settings. Step names: the PRE object. Settings are saved in the browser.
+  Customize page ....... app.js, section CUSTOMIZE (presets in TPRE, fonts in FONTS) and the
+                         "customization layer" at the end of style.css. Site colors never change the
+                         solving screen (focus mode); that has its own timer style (variables
+                         --fbg, --tfg, --thold, --tready, --tff, --tsc).
   Phone timer look ..... style.css section "mobile timer" and vTimerMob() in app.js
                          (phones and tablets: blue app layout with a bottom bar).
   Solves / Progress .... app.js, vHist() and vProg(); one solve's dialog is solveDlg().

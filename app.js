@@ -90,7 +90,7 @@ if(ED.i==-2){if(v==id)delete UO[id];else UO[id]=v;ls.set("cl_uo",UO);setMain(id,
 else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[ED.i]=v;ls.set("cl_ua",UX)}
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
-const IC={timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
+const IC={timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",theme:"🎨",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
 function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:(MB()?"":"new scramble");const b=$("#sv");if(b)b.textContent=(CS()||MB())?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
@@ -172,13 +172,13 @@ const ALL=[];for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>A
 const inv=a=>a.split(" ").reverse().map(x=>x.endsWith("'")?x.slice(0,-1):x.endsWith("2")?x:x+"'").join(" ");
 
 /* ---------- STATE ---------- */
-const TABS=[["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
+const TABS=[["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["theme","Customize"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
 let tab="timer",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.get("cl_w",{}),T={s:"idle",t0:0,hold:0,scr:""};
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,prog:vProg,sync:vSync,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
+function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -205,7 +205,7 @@ const setHtml=()=>`
 <div class="sr"><input type="checkbox" id="ss"><label for="ss">Split times: tap at the end of each step</label></div>
 <div class="sr"><label for="sm">Split style</label><select id="sm"><option value="tap">Tap at the end of each step</option><option value="hold">Hold to pause and see the step time</option></select></div><div class="sr"><label for="rd">After releasing</label><select id="rd"><option value="0">Continue right away</option><option value="3">Wait 3 seconds</option><option value="5">Wait 5 seconds</option></select></div>
 <div class="sr"><label for="sp">Steps</label><select id="sp"><option>CFOP</option><option>Roux</option><option>ZZ</option><option>Beginner</option><option>Custom</option></select></div>
-<input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p>`;
+<input id="spc" placeholder="Custom steps, separated by commas: Cross, F2L, OLL, PLL"><p class="mu" id="spv"></p><button class="mb" data-t="theme" style="margin-top:8px">🎨 Colors & look…</button>`;
 function vTimer(){return `<div class="card" id="scc"><div class="sch"><b>Scramble</b><span class="mu" id="su"></span></div><p id="sc"></p><div class="row tb"><button class="btn" id="ns">🔀 New</button><button class="btn" id="rp">↻ Do it again</button><button class="btn" id="sv">☆ Save</button><button class="btn" id="cb">🎯 Fastest cross</button></div></div><div id="cx" class="card" hidden></div>
 <div id="tz"><button class="mb" id="xc">✕ Cancel</button><div id="tm">0.00</div><div id="ph" class="phl"></div><div class="mu" id="hint">${hint0()}</div></div>
 <div id="res" class="card" hidden></div><div class="grid" id="stg"></div><div class="row"><button class="btn" id="dl">Delete last</button><button class="btn" id="ca">Clear all</button></div>
@@ -404,7 +404,7 @@ const c=`<div class="card"><h2>📈 Progress</h2>${chart()}</div><div class="car
 return (isDesk()?"":mhead("Progress"))+c+(isDesk()?"":mnav())}
 /* ---- backup, restore and GitHub Gist sync ---- */
 const GH={tok:ls.get("cl_tok",""),gid:ls.get("cl_gid","")},FNB="cubelab-backup.json";
-const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_set:ST}});
+const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_set:ST,cl_theme:THM,cl_tmr:TMR}});
 const tkeys=a=>{const seen={};return a.map(x=>{const k=x.d?x.d+"|"+x.s:"|"+x.s+"|"+x.t;seen[k]=(seen[k]||0)+1;return k+"#"+seen[k]})};
 function mergeTimes(a,b){const m=new Map(),ka=tkeys(a),kb=tkeys(b);a.forEach((x,i)=>m.set(ka[i],x));let add=0;b.forEach((y,i)=>{const x=m.get(kb[i]);if(!x){m.set(kb[i],y);add++}else if((y.m||y.d||0)>(x.m||x.d||0))m.set(kb[i],y)});const all=[...m.values()];return{list:[...all.filter(x=>!x.d),...all.filter(x=>x.d).sort((p,q)=>p.d-q.d)],add}}
 function reapplyUO(){for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>{c.a=UO[c.id]||c.id});ALL.forEach(x=>{x.a=UO[x.id]||x.id})}
@@ -412,15 +412,15 @@ function mergeIn(inc,mode,withSet){const D=(inc&&inc.data)||{};if(!inc||inc.app!
 if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});add=times.length}
 else{const r=mergeTimes(times,D.cl_t);times=r.list;add=r.add;(D.cl_pin||[]).forEach(x=>{if(!PIN.includes(x))PIN.push(x)});(D.cl_done||[]).forEach(x=>{if(!LD.includes(x))LD.push(x)});
 for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k])}
-if(withSet&&D.cl_set){Object.assign(ST,D.cl_set);ssave()}
+if(withSet&&D.cl_set){Object.assign(ST,D.cl_set);ssave()}if(withSet&&D.cl_theme){THM=D.cl_theme;TMR=D.cl_tmr||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer()}
 saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);reapplyUO();return{add,total:times.length}}
 function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Everything you do (solves with scrambles and descriptions, saved scrambles, finished lessons, your edited algorithms) is stored in <b>this browser</b>. Use the tools below to keep a copy or to move it to another device.</p></div>
 <div class="card"><h3>1. Make a backup</h3><div class="row"><button class="btn pr" id="bkd">⬇ Download backup file</button><button class="btn" id="bkc">📋 Copy backup text</button></div><p class="mu" id="bkm">The file has all your data. Keep it somewhere safe (Drive, email to yourself, your GitHub repo).</p></div>
 <div class="card"><h3>2. Restore on this device</h3><p>Pick a backup file, or paste the backup text.</p><input type="file" id="bkf" accept=".json,application/json"><textarea id="bkt" rows="4" placeholder="…or paste the backup text here"></textarea>
-<div class="sr"><label><input type="radio" name="bkmode" value="merge" checked> Merge (keep what is here and add the new solves)</label></div><div class="sr"><label><input type="radio" name="bkmode" value="replace"> Replace everything on this device</label></div><div class="sr"><input type="checkbox" id="bks"><label for="bks">Also copy the timer settings</label></div><button class="btn pr" id="bki">Import</button><p class="mu" id="bkr"></p></div>
+<div class="sr"><label><input type="radio" name="bkmode" value="merge" checked> Merge (keep what is here and add the new solves)</label></div><div class="sr"><label><input type="radio" name="bkmode" value="replace"> Replace everything on this device</label></div><div class="sr"><input type="checkbox" id="bks"><label for="bks">Also copy my settings and theme (colors, timer style)</label></div><button class="btn pr" id="bki">Import</button><p class="mu" id="bkr"></p></div>
 <div class="card"><h3>3. Sync through GitHub (optional)</h3><p>Your data is kept in a <b>private gist</b> on your own GitHub account. Press <b>Sync now</b> on every device and they will all end up with the same solves.</p>
 <ol class="mu"><li>On GitHub: Settings → Developer settings → Personal access tokens → <b>Tokens (classic)</b> → Generate new token.</li><li>Tick only <b>gist</b>, create it and paste it below.</li><li>Press Sync now. On another device paste the same token and press Sync now there.</li></ol>
-<input id="gtk" type="password" placeholder="GitHub token (only the “gist” permission)" autocomplete="off"><input id="ggid" placeholder="Gist ID (filled in automatically)" autocomplete="off"><div class="row"><button class="btn pr" id="gsy">🔄 Sync now</button><button class="btn" id="gup">⬆ Upload only</button><button class="btn" id="gdn">⬇ Download only</button></div><div class="row" style="margin-top:8px"><button class="mb" id="gsv">Save token</button><button class="mb" id="gfo">Forget token</button></div><p class="mu" id="gms"></p><p class="mu">The token stays in this browser only. Anyone who can use this browser could use it, so give it only the gist permission. Sync needs internet and a normal website (it can be blocked inside some preview windows).</p></div>`}
+<input id="gtk" type="password" placeholder="GitHub token (only the “gist” permission)" autocomplete="off"><input id="ggid" placeholder="Gist ID (filled in automatically)" autocomplete="off"><div class="sr"><input type="checkbox" id="gst"><label for="gst">Also sync my settings and theme</label></div><div class="row"><button class="btn pr" id="gsy">🔄 Sync now</button><button class="btn" id="gup">⬆ Upload only</button><button class="btn" id="gdn">⬇ Download only</button></div><div class="row" style="margin-top:8px"><button class="mb" id="gsv">Save token</button><button class="mb" id="gfo">Forget token</button></div><p class="mu" id="gms"></p><p class="mu">The token stays in this browser only. Anyone who can use this browser could use it, so give it only the gist permission. Sync needs internet and a normal website (it can be blocked inside some preview windows).</p></div>`}
 function syncInit(){$("#gtk").value=GH.tok;$("#ggid").value=GH.gid}
 async function gh(method,path,body){const r=await fetch("https://api.github.com"+path,{method,headers:{Authorization:"Bearer "+GH.tok,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error("GitHub answered "+r.status+(r.status==401?" (check the token)":r.status==403?" (the token needs the gist permission)":r.status==404?" (gist not found)":""));return r.json()}
 async function gPush(){const content=JSON.stringify(bkData());if(GH.gid)await gh("PATCH","/gists/"+GH.gid,{files:{[FNB]:{content}}});else{const g=await gh("POST","/gists",{description:"CubeLab backup",public:false,files:{[FNB]:{content}}});GH.gid=g.id;ls.set("cl_gid",g.id);$("#ggid").value=g.id}}
@@ -436,18 +436,98 @@ else if(id=="gsv"||id=="gup"||id=="gdn"||id=="gsy"||id=="gfo"){
 if(id=="gfo"){GH.tok="";GH.gid="";ls.set("cl_tok","");ls.set("cl_gid","");syncInit();msg("#gms","Token and gist ID removed from this browser.",true);return}
 GH.tok=$("#gtk").value.trim();GH.gid=$("#ggid").value.trim();ls.set("cl_tok",GH.tok);ls.set("cl_gid",GH.gid);if(id=="gsv"){msg("#gms","Saved.",true);return}
 if(!GH.tok)throw new Error("Paste your GitHub token first");msg("#gms","Working…");let t="";
-if(id=="gdn"||id=="gsy"){try{const r=mergeIn(await gPull(),"merge",false);t+=`Downloaded: ${r.add} new solves. `}catch(e){if(id=="gdn"||!/No CubeLab backup/.test(e.message))throw e}}
+if(id=="gdn"||id=="gsy"){try{const r=mergeIn(await gPull(),"merge",!!($("#gst")&&$("#gst").checked));t+=`Downloaded: ${r.add} new solves. `}catch(e){if(id=="gdn"||!/No CubeLab backup/.test(e.message))throw e}}
 if(id=="gup"||id=="gsy"){await gPush();t+="Uploaded."}msg("#gms",t,true)}
 }catch(e){msg(id[0]=="b"&&id!="bkd"&&id!="bkc"?"#bkr":id[0]=="g"?"#gms":"#bkm",(e instanceof TypeError?"Could not reach GitHub (no internet, or this window blocks network access). ":"")+e.message,false)}}
 sdWire();
+/* ---------- CUSTOMIZE: colors and look for the whole site + a separate timer style ---------- */
+const TKEYS=[["bg","Page background"],["cd","Cards"],["bar","Bars, panels and pop-ups"],["tx","Text"],["mu","Soft text"],["ac","Accent"],["bd","Borders"],["ok","Good (green)"],["bad","Bad (red)"]];
+const TPRE={
+"Auto (device)":null,
+"Light":{bg:"#f5f4ef",cd:"#ffffff",bar:"#ffffff",tx:"#1c1c1e",mu:"#6c6c72",ac:"#2563eb",bd:"#e3e1d8",ok:"#16a34a",bad:"#dc2626"},
+"Dark":{bg:"#111113",cd:"#1c1c1f",bar:"#1c1c1f",tx:"#f2f2f4",mu:"#9a9aa2",ac:"#6b9bff",bd:"#2f2f34",ok:"#4ade80",bad:"#f87171"},
+"Black":{bg:"#000000",cd:"#0f0f0f",bar:"#141414",tx:"#eeeeee",mu:"#8a8a8a",ac:"#00d1ff",bd:"#2a2a2a",ok:"#3dff8a",bad:"#ff5c5c"},
+"Phone blue":{bg:"#1b3cff",bg2:"#2a1fec",ang:180,cd:"#3b4df8",bar:"#3a1de6",tx:"#ffffff",mu:"#cfd3ff",ac:"#ffe066",bd:"#6f7dff",ok:"#8dffb8",bad:"#ffb3b3"},
+"Forest":{bg:"#0f1f17",bg2:"#16331f",ang:160,cd:"#1b3a2a",bar:"#174229",tx:"#e8f5ec",mu:"#9fc4ae",ac:"#7be495",bd:"#2f5a43",ok:"#7be495",bad:"#ff8a80"},
+"Ocean":{bg:"#06202e",bg2:"#0b4a63",ang:160,cd:"#0e3a4f",bar:"#0c5877",tx:"#e6f6ff",mu:"#9cc7dc",ac:"#38d6ff",bd:"#1f6a8a",ok:"#5eead4",bad:"#ff8fa3"},
+"Sunset":{bg:"#2b1020",bg2:"#5a1d2d",ang:160,cd:"#3d1830",bar:"#6b2036",tx:"#fff1ea",mu:"#f0b9a8",ac:"#ffb347",bd:"#7a3042",ok:"#ffd166",bad:"#ff6b6b"},
+"Purple":{bg:"#1a1033",bg2:"#2e1a5e",ang:160,cd:"#2b1b52",bar:"#3a2478",tx:"#f3ecff",mu:"#bda7e8",ac:"#c084fc",bd:"#4d3394",ok:"#86efac",bad:"#fda4af"},
+"Rose":{bg:"#fff1f4",cd:"#ffffff",bar:"#ffe0e8",tx:"#3a1020",mu:"#8c5566",ac:"#e11d6a",bd:"#f3c9d5",ok:"#0f9d58",bad:"#d90429"},
+"Paper":{bg:"#f4ecd8",cd:"#fbf6e9",bar:"#efe3c6",tx:"#3b2f1e",mu:"#7d6b4f",ac:"#b45309",bd:"#dccfb0",ok:"#4d7c0f",bad:"#b91c1c"}};
+const FONTS=[["Default",""],["System",'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif'],["Serif",'Georgia,"Times New Roman",serif'],["Rounded",'"Trebuchet MS","Segoe UI",sans-serif'],["Monospace",'ui-monospace,Menlo,Consolas,monospace'],["Digital (Orbitron)",'Orbitron,"Share Tech Mono",ui-monospace,monospace']];
+let THM=ls.get("cl_theme",{}),TMR=ls.get("cl_tmr",{});
+const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||"");const n=m?parseInt(m[1],16):0x888888;return[n>>16,(n>>8)&255,n&255]};
+const lum=h=>{const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
+const cvx=(()=>{try{return document.createElement("canvas").getContext("2d")}catch(e){return null}})();
+function toHex(str,under){if(!cvx||!str)return"#888888";cvx.clearRect(0,0,1,1);cvx.fillStyle="#000";cvx.fillStyle=String(str).trim();cvx.fillRect(0,0,1,1);let[r,g,b,a]=cvx.getImageData(0,0,1,1).data;if(a<255&&under){const u=hexRgb(under),k=a/255;r=Math.round(r*k+u[0]*(1-k));g=Math.round(g*k+u[1]*(1-k));b=Math.round(b*k+u[2]*(1-k))}return"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("")}
+const curVar=k=>{const cs=getComputedStyle(document.body),bg=toHex(cs.getPropertyValue("--bg"));return k=="bg"?bg:toHex(cs.getPropertyValue("--"+k),bg)};
+const curCol=k=>(THM.c&&THM.c[k])||curVar(k);
+function applyTheme(){const b=document.body,s=b.style,r=document.documentElement.style,c=THM.c||{},g=THM.g||{};
+TKEYS.forEach(([k])=>c[k]?s.setProperty("--"+k,c[k]):s.removeProperty("--"+k));
+b.classList.toggle("themed",!!c.bg);
+if(c.bg){s.setProperty("--bgi",g.on&&g.c2?`linear-gradient(${g.ang==null?180:g.ang}deg,${c.bg},${g.c2})`:"var(--bg)");s.colorScheme=lum(c.bg)<.4?"dark":"light"}else{s.removeProperty("--bgi");s.colorScheme=""}
+c.ac?s.setProperty("--onac",lum(c.ac)>.45?"#111111":"#ffffff"):s.removeProperty("--onac");
+THM.ff?s.setProperty("--ff",THM.ff):s.removeProperty("--ff");
+THM.fs&&THM.fs!=100?r.setProperty("--fs",THM.fs/100):r.removeProperty("--fs");
+if(THM.rad!=null){s.setProperty("--r",THM.rad+"px");s.setProperty("--rb",Math.round(THM.rad*.7)+"px");s.setProperty("--rbp",Math.round(THM.rad*2)+"px")}else["--r","--rb","--rbp"].forEach(k=>s.removeProperty(k));
+b.classList.toggle("nosnp",!!THM.nosnp);b.classList.toggle("nopst",!!THM.nopst)}
+function applyTimer(){const b=document.body,s=b.style,m=TMR;
+[["fg","--tfg"],["hold","--thold"],["ready","--tready"],["mu","--tmu"]].forEach(([k,v])=>m[k]?s.setProperty(v,m[k]):s.removeProperty(v));
+m.fbg?s.setProperty("--fbg",m.g2?`linear-gradient(${m.ang==null?180:m.ang}deg,${m.fbg},${m.g2})`:m.fbg):s.removeProperty("--fbg");
+m.ff?s.setProperty("--tff",m.ff):s.removeProperty("--tff");b.classList.toggle("tcf",!!m.ff);
+m.w?s.setProperty("--tw",m.w):s.removeProperty("--tw");b.classList.toggle("tcw",!!m.w);
+m.size&&m.size!=100?s.setProperty("--tsc",m.size/100):s.removeProperty("--tsc")}
+const thSave=()=>{ls.set("cl_theme",THM);applyTheme()},tmSave=()=>{ls.set("cl_tmr",TMR);applyTimer()};
+function ensureC(){if(!THM.c||!THM.c.bg){THM.c=THM.c||{};TKEYS.forEach(([k])=>{if(!THM.c[k])THM.c[k]=curVar(k)})}}
+function thPreset(n){const p=TPRE[n];THM.c=p?Object.fromEntries(TKEYS.map(([k])=>[k,p[k]])):{};THM.g=p&&p.bg2?{on:true,c2:p.bg2,ang:p.ang==null?160:p.ang}:{on:false};THM.pre=n;thSave();render()}
+function thSet(k,t){const v=t.type=="checkbox"?t.checked:t.value;
+if(TKEYS.some(x=>x[0]==k)){ensureC();THM.c[k]=v}
+else if(k=="gon"){ensureC();THM.g=Object.assign({c2:"#2a1fec",ang:160},THM.g||{},{on:v})}
+else if(k=="g2"){ensureC();THM.g=Object.assign({ang:160},THM.g||{},{c2:v,on:true});const g=$("#gon");if(g)g.checked=true}
+else if(k=="ang"){ensureC();THM.g=Object.assign({c2:"#2a1fec"},THM.g||{},{ang:+v})}
+else if(k=="ff")THM.ff=FONTS[+v][1];else if(k=="fs")THM.fs=+v;else if(k=="rad")THM.rad=+v;else if(k=="nosnp"||k=="nopst")THM[k]=v;
+THM.pre="Custom";thSave();const o=$("#thv_"+k);if(o)o.textContent=k=="fs"?v+"%":k=="rad"?v+" px":k=="ang"?v+"°":v;document.querySelectorAll(".sw.on").forEach(e=>e.classList.remove("on"))}
+function tmOpt(k,t){const v=t.type=="checkbox"?t.checked:t.value;
+if(k=="size")TMR.size=+v;else if(k=="w")TMR.w=v||0;else if(k=="ff")TMR.ff=FONTS[+v][1]||"";else if(k=="ang")TMR.ang=+v;else TMR[k]=v;
+tmSave();const o=$("#tmv_"+k);if(o)o.textContent=k=="size"?v+"%":k=="ang"?v+"°":v}
+function tmClear(k){if(k=="fbg"){delete TMR.fbg;delete TMR.g2;delete TMR.ang}else if(k=="ff")delete TMR.ff;else delete TMR[k];tmSave();render()}
+const fsel=(cur,at)=>`<select ${at}>${FONTS.map(([n,v],i)=>`<option value="${i}" ${v==cur?"selected":""}>${n}</option>`).join("")}</select>`;
+function vTheme(){const g=THM.g||{},c=k=>curCol(k),tcol=(k,l,d)=>`<label class="cl"><span>${l}</span><span><input type="color" data-tm="${k}" value="${TMR[k]||d}"><button class="mb xs" data-tmx="${k}" title="Back to automatic">auto</button></span></label>`;
+return `<div class="card"><h2>🎨 Customize</h2><p>Pick colors and a look for the <b>whole site</b>. Your choices are saved in this browser (and travel with a backup if you tick “also copy my settings and theme”). The <b>solving screen (focus mode) is not changed by the site colors</b>: it has its own timer style further down.</p></div>
+<div class="card"><h3>Presets</h3><div class="swg">${Object.entries(TPRE).map(([n,p])=>`<button class="sw ${THM.pre==n?"on":""}" data-pr="${esc(n)}"><span class="sws"><i style="background:${p?p.bg:"#9aa0aa"}"></i><i style="background:${p?p.cd:"#d7dae0"}"></i><i style="background:${p?p.bar:"#c4c9d2"}"></i><i style="background:${p?p.ac:"#2563eb"}"></i></span>${n}</button>`).join("")}</div></div>
+<div class="card"><h3>Colors</h3><div class="cg">${TKEYS.map(([k,l])=>`<label class="cl"><span>${l}</span><input type="color" data-th="${k}" value="${c(k)}"></label>`).join("")}</div>
+<div class="sr" style="margin-top:12px"><input type="checkbox" id="gon" data-th="gon" ${g.on?"checked":""}><label for="gon">Gradient background</label></div>
+<div class="cg"><label class="cl"><span>Second color</span><input type="color" data-th="g2" value="${g.c2||"#2a1fec"}"></label><label class="cl"><span>Angle <b id="thv_ang">${g.ang==null?180:g.ang}°</b></span><input type="range" min="0" max="360" step="5" data-th="ang" value="${g.ang==null?180:g.ang}"></label></div></div>
+<div class="card"><h3>Look</h3><div class="cg"><label class="cl"><span>Font</span>${fsel(THM.ff||"",'data-th="ff"')}</label>
+<label class="cl"><span>Text size <b id="thv_fs">${THM.fs||100}%</b></span><input type="range" min="80" max="140" step="5" data-th="fs" value="${THM.fs||100}"></label>
+<label class="cl"><span>Roundness <b id="thv_rad">${THM.rad==null?16:THM.rad} px</b></span><input type="range" min="0" max="28" step="1" data-th="rad" value="${THM.rad==null?16:THM.rad}"></label></div>
+<div class="sr"><input type="checkbox" id="nosnp" data-th="nosnp" ${THM.nosnp?"checked":""}><label for="nosnp">Hide the scramble picture on the timer</label></div>
+<div class="sr"><input type="checkbox" id="nopst" data-th="nopst" ${THM.nopst?"checked":""}><label for="nopst">Hide the step breakdown under the time</label></div></div>
+<div class="card"><h3>⏱ Timer style (separate from the site colors)</h3><p class="mu">These only change the timer: the big digits and the solving screen (focus mode). “auto” goes back to the default.</p>
+<div class="tpv"><div class="tpd"><span class="tb">12</span><span class="td">.34</span></div><div class="tpn"><span class="h">● holding</span><span class="r">● ready</span><span class="m">hint text</span></div></div>
+<div class="cg" style="margin-top:12px">${tcol("fg","Digits color","#ffffff")}${tcol("hold","Color while holding","#ff5555")}${tcol("ready","Color when ready","#55ff55")}${tcol("mu","Small text color","#9aa0b5")}${tcol("fbg","Solving-screen background","#0d0d12")}
+<label class="cl"><span>Background gradient</span><span><input type="color" data-tm="g2" value="${TMR.g2||"#2a1fec"}"></span></label>
+<label class="cl"><span>Gradient angle <b id="tmv_ang">${TMR.ang==null?180:TMR.ang}°</b></span><input type="range" min="0" max="360" step="5" data-tm="ang" value="${TMR.ang==null?180:TMR.ang}"></label>
+<label class="cl"><span>Digits font</span>${fsel(TMR.ff||"",'data-tm="ff"')}</label>
+<label class="cl"><span>Digits size <b id="tmv_size">${TMR.size||100}%</b></span><input type="range" min="50" max="170" step="5" data-tm="size" value="${TMR.size||100}"></label>
+<label class="cl"><span>Weight</span><select data-tm="w"><option value="">Default</option><option value="400" ${TMR.w=="400"?"selected":""}>Light</option><option value="700" ${TMR.w=="700"?"selected":""}>Bold</option><option value="900" ${TMR.w=="900"?"selected":""}>Heavy</option></select></label></div>
+<div class="row" style="margin-top:10px"><button class="btn" id="tmr">Reset timer style</button></div></div>
+<div class="card"><h3>Share or reset</h3><div class="row"><button class="btn" id="thc">📋 Copy my theme as text</button><button class="btn" id="tha">Apply theme text</button><button class="btn" id="thr">↺ Reset everything here</button></div><textarea id="thx" rows="3" placeholder="Paste a theme text here to use it, or copy yours from the button above"></textarea><p class="mu" id="thm"></p></div>`}
+function thAct(id){const m=$("#thm");
+if(id=="thr"){THM={};TMR={};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer();render();return}
+if(id=="tmr"){TMR={};tmSave();render();return}
+if(id=="thc"){const j=JSON.stringify({app:"cubelab-theme",theme:THM,timer:TMR});$("#thx").value=j;(navigator.clipboard?navigator.clipboard.writeText(j):Promise.reject()).then(()=>{m.textContent="Copied! Paste it on another device with “Apply theme text”."},()=>{$("#thx").select();m.textContent="Select the text in the box and copy it."});return}
+if(id=="tha"){try{const o=JSON.parse($("#thx").value);if(o.app!="cubelab-theme")throw 0;THM=o.theme||{};TMR=o.timer||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer();render()}catch(e){m.textContent="That is not a CubeLab theme text."}}}
+document.addEventListener("input",e=>{const d=e.target.dataset;if(!d)return;if(d.th)thSet(d.th,e.target);else if(d.tm)tmOpt(d.tm,e.target)});
+applyTheme();applyTimer();
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#bset2,#xs,#blp,[data-si],#mdel,#mnote,#mmenu,#mmore,#hmore,#bkd,#bkc,#bki,#gsy,#gup,#gdn,#gsv,#gfo");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#bset2,#xs,#blp,[data-si],#mdel,#mnote,#mmenu,#mmore,#hmore,[data-pr],[data-tmx],#thr,#tmr,#thc,#tha,#bkd,#bkc,#bki,#gsy,#gup,#gdn,#gsv,#gfo");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
 if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
-if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(/^(bkd|bkc|bki|gsy|gup|gdn|gsv|gfo)$/.test(t.id))return syncAct(t.id);if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
+if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.pr)return thPreset(t.dataset.pr);if(t.dataset.tmx)return tmClear(t.dataset.tmx);if(/^(thr|tmr|thc|tha)$/.test(t.id))return thAct(t.id);if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(/^(bkd|bkc|bki|gsy|gup|gdn|gsv|gfo)$/.test(t.id))return syncAct(t.id);if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
 document.addEventListener("input",e=>{if(e.target.id=="q")fill();if(e.target.id=="hq"){HQ=e.target.value;HN=50;histFill()}});

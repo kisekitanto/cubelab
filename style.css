@@ -193,3 +193,68 @@ body.mob.tfocus #tz{background:linear-gradient(180deg,#1b3cff 0%,#2a1fec 100%)}
 body.mob .hrow{background:rgba(255,255,255,.12)}body.mob .card{box-shadow:none}
 
 .newb{white-space:nowrap}#mao{padding-top:30px}
+:root{--bar:#ffffff}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bar:#1c1c1f}}
+body.cs{--bar:#1a1a1a}body.mob{--bar:#3a1de6}
+
+/* ---------- customization layer: theme colors, font, size and roundness for the whole site ---------- */
+html{font-size:calc(16px*var(--fs,1))}
+body{font-family:var(--ff,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);font-size:1rem}
+.card,.st,.hrow{border-radius:var(--r,16px)}
+.btn{border-radius:var(--rb,10px)}.pill{border-radius:var(--rbp,999px)}.mb{border-radius:var(--rb,8px)}
+input,select,textarea,code.alg{border-radius:var(--rb,10px)}
+#mbar,#mnav{border-radius:calc(var(--r,16px)*1.4)}
+.btn.pr,.pill.on{color:var(--onac,#fff)}
+body.nosnp #snp{display:none}body.nopst #pst{display:none!important}
+body.themed{background:var(--bgi) fixed}
+body.themed #csbar,body.themed #lp,body.themed #snp,body.themed #setpop,body.themed #mbar,body.themed #mnav,body.themed.mob nav,body.themed.mob #cx,body.themed .vc{background:var(--bar);border-color:var(--bd);color:var(--tx)}
+body.themed .cb2,body.themed.cs #mb{background:var(--bar);border-color:var(--bd);color:var(--tx)}
+body.themed #clogo{background:var(--ac);color:var(--onac,#fff);box-shadow:none}
+body.themed #csbar .tl,body.themed #csbar .tl button{color:var(--mu)}
+body.themed.cs #csbar #sc{color:var(--tx)}
+body.themed #lp td,body.themed #lp th,body.themed #stg,body.themed .lpb{border-color:var(--bd)}
+body.themed #lp th{background:var(--cd);color:var(--mu)}
+body.themed .lpb button{background:var(--cd);color:var(--tx);border-color:var(--bd)}
+body.themed.cs #sub,body.themed.cs #hint,body.themed.cs #pst .mu{color:var(--mu)}body.themed.cs #pst .mu b{color:var(--tx)}
+body.themed.mob{color:var(--tx)}
+body.themed.mob nav button,body.themed.mob nav button.on{color:var(--tx)}
+body.themed.mob select,body.themed.mob input:not([type=checkbox]):not([type=radio]),body.themed.mob textarea{background:var(--cd);color:var(--tx)}
+body.themed.mob .btn,body.themed.mob .mb{background:var(--cd);color:var(--tx);border-color:var(--bd)}
+body.themed.mob .btn.pr{background:var(--ac);color:var(--onac,#fff);border-color:var(--ac)}
+body.themed.mob code.alg{background:var(--cd);color:var(--tx);border-color:var(--bd)}
+body.themed .ib,body.themed .mtitle b,body.themed.mob #sc{color:var(--tx)}
+body.themed .mtitle small,body.themed #mnav button,body.themed.mob #hint,body.themed.mob #pst .mu{color:var(--mu)}
+body.themed #mnav button.on{color:var(--tx)}
+body.themed #res .rb{background:var(--tx);color:var(--bg)}body.themed #res .rb.del{background:var(--bad);color:var(--bg)}
+body.themed #res .pl{background:var(--tx)}body.themed #res .pl button{color:var(--bg)}body.themed #res .pl button.on{background:var(--ac);color:var(--onac,#fff)}
+body.themed .newb{background:var(--ac);color:var(--onac,#fff)}
+/* ---------- the timer has its own style (digits, hold/ready colors, font, size, solving-screen background) ---------- */
+body #tm{color:var(--tfg,var(--tx));zoom:var(--tsc,1)}
+body.cs #tm,body.mob #tm{color:var(--tfg,#fff)}
+body.themed.cs #tm,body.themed.mob #tm{color:var(--tfg,var(--tx))}
+body.tcf #tm,body.tcf .tpd{font-family:var(--tff)}body.tcw #tm,body.tcw .tpd{font-weight:var(--tw)}
+body #tz.hold #tm{color:var(--thold,var(--bad))}body #tz.ready #tm{color:var(--tready,var(--ok))}
+body.cs #tz.hold #tm{color:var(--thold,#ff5555)}body.cs #tz.ready #tm{color:var(--tready,#55ff55)}
+body.mob #tz.hold #tm{color:var(--thold,#ff8b8b)}body.mob #tz.ready #tm{color:var(--tready,#8dffb8)}
+/* focus mode (while you solve): never follows the site theme */
+body.tfocus #tz,body.tfocus.cs #tz,body.tfocus.mob #tz{background:var(--fbg,#0d0d12)!important}
+body.tfocus.cs #tz{background:var(--fbg,#000)!important}
+body.tfocus.mob #tz{background:var(--fbg,linear-gradient(180deg,#1b3cff 0%,#2a1fec 100%))!important}
+body.tfocus #tm,body.tfocus.cs #tm,body.tfocus.mob #tm,body.tfocus.themed #tm{color:var(--tfg,#fff)}
+body.tfocus #tz.hold #tm,body.tfocus.cs #tz.hold #tm,body.tfocus.mob #tz.hold #tm{color:var(--thold,#ff5555)}
+body.tfocus #tz.ready #tm,body.tfocus.cs #tz.ready #tm,body.tfocus.mob #tz.ready #tm{color:var(--tready,#55ff55)}
+body.tfocus #hint,body.tfocus #ph,body.tfocus.cs #hint,body.tfocus.mob #hint,body.tfocus.themed #hint{color:var(--tmu,#9aa0b5)}body.tfocus #ph b{color:var(--tfg,#fff)}
+body.tfocus #xc{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.35)}
+/* customize page */
+.swg{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.sw{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:6px;border:2px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:12px;cursor:pointer;font:inherit;font-size:.8rem}
+.sw.on{border-color:var(--ac)}.sw .sws{display:flex;height:22px;border-radius:7px;overflow:hidden}.sw .sws i{flex:1}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 14px}
+.cl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cl input[type=color]{width:46px;height:34px;padding:0;border:1px solid var(--bd);border-radius:8px;background:none;margin:0;cursor:pointer}
+.sr input[type=range],.cl input[type=range]{width:100%;max-width:240px;margin:0}
+.tpv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:150px;border-radius:var(--r,16px);background:var(--fbg,#0d0d12);padding:14px}
+.tpd{font:700 3.6rem/1.1 ui-monospace,Menlo,Consolas,monospace;color:var(--tfg,#fff);zoom:var(--tsc,1)}.tpd .td{font-size:.52em}
+.tpn{display:flex;gap:16px;font-size:.85rem}.tpn .h{color:var(--thold,#ff5555)}.tpn .r{color:var(--tready,#55ff55)}.tpn .m{color:var(--tmu,#9aa0b5)}
+.xs{font-size:.78rem;padding:2px 8px;margin-left:6px}
+/* the step breakdown never shows on the solving screen */
+body.tfocus #pst,body.tfocus.cs #bt #pst,body.tfocus.mob #pst{display:none!important}
