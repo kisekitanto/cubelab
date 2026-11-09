@@ -258,3 +258,10 @@ body.tfocus #xc{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(25
 .xs{font-size:.78rem;padding:2px 8px;margin-left:6px}
 /* the step breakdown never shows on the solving screen */
 body.tfocus #pst,body.tfocus.cs #bt #pst,body.tfocus.mob #pst{display:none!important}
+/* the menu scrolls when the window is short, so the last items stay reachable */
+nav{max-height:calc(100dvh - 72px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+body.mob nav{max-height:calc(100dvh - 96px)}
+
+/* menu: scrolls when the window is short, so every page button can be reached */
+nav{max-height:calc(100vh - 70px);max-height:calc(100dvh - 70px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+body.cs nav{max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px)}
