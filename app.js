@@ -12,7 +12,7 @@
    STATE / NAV / LEARN / ALGS / TIMER / TRAINER / EVENTS ... the pages
    ===================================================================== */
 const $=s=>document.querySelector(s);
-const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}try{if(window.__cubelabOnLocalSave)window.__cubelabOnLocalSave(k)}catch(e){}}};
 const chip=a=>`<code class="alg" data-c="${a}" title="Tap to copy">${a}</code>`;
 const A=(n,a,t="")=>({n,a,t});
 
@@ -90,7 +90,7 @@ if(ED.i==-2){if(v==id)delete UO[id];else UO[id]=v;ls.set("cl_uo",UO);setMain(id,
 else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[ED.i]=v;ls.set("cl_ua",UX)}
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
-const IC={timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",theme:"🎨",home:"🏠",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
+const IC={account:"☁️",timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",theme:"🎨",home:"🏠",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
 function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:(MB()?"":"new scramble");const b=$("#sv");if(b)b.textContent=(CS()||MB())?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
@@ -172,13 +172,13 @@ const ALL=[];for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>A
 const inv=a=>a.split(" ").reverse().map(x=>x.endsWith("'")?x.slice(0,-1):x.endsWith("2")?x:x+"'").join(" ");
 
 /* ---------- STATE ---------- */
-const TABS=[["home","Home"],["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["theme","Customize"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
+const TABS=[["home","Home"],["account","Account"],["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["theme","Customize"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
 let tab="home",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.get("cl_w",{}),T={s:"idle",t0:0,hold:0,scr:""};
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
+function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,account:vAccount,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -409,12 +409,12 @@ const tkeys=a=>{const seen={};return a.map(x=>{const k=x.d?x.d+"|"+x.s:"|"+x.s+"
 function mergeTimes(a,b){const m=new Map(),ka=tkeys(a),kb=tkeys(b);a.forEach((x,i)=>m.set(ka[i],x));let add=0;b.forEach((y,i)=>{const x=m.get(kb[i]);if(!x){m.set(kb[i],y);add++}else if((y.m||y.d||0)>(x.m||x.d||0))m.set(kb[i],y)});const all=[...m.values()];return{list:[...all.filter(x=>!x.d),...all.filter(x=>x.d).sort((p,q)=>p.d-q.d)],add}}
 function reapplyUO(){for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>{c.a=UO[c.id]||c.id});ALL.forEach(x=>{x.a=UO[x.id]||x.id})}
 function mergeIn(inc,mode,withSet){const D=(inc&&inc.data)||{};if(!inc||inc.app!="cubelab"||!D.cl_t)throw new Error("This is not a CubeLab backup");let add=0;
-if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});add=times.length}
+if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});DAYS=[...(D.cl_days||[])];add=times.length}
 else{const r=mergeTimes(times,D.cl_t);times=r.list;add=r.add;(D.cl_pin||[]).forEach(x=>{if(!PIN.includes(x))PIN.push(x)});(D.cl_done||[]).forEach(x=>{if(!LD.includes(x))LD.push(x)});
 for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k])}
-if(withSet&&D.cl_set){Object.assign(ST,D.cl_set);ssave()}if(withSet&&D.cl_theme){THM=D.cl_theme;TMR=D.cl_tmr||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer()}
+if(withSet&&D.cl_set){if(mode=="replace")Object.keys(ST).forEach(k=>delete ST[k]);Object.assign(ST,D.cl_set);ssave()}if(withSet&&D.cl_theme){THM=D.cl_theme;TMR=D.cl_tmr||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer()}
 (D.cl_days||[]).forEach(x=>{if(!DAYS.includes(x))DAYS.push(x)});ls.set("cl_days",DAYS);saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);reapplyUO();return{add,total:times.length}}
-function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Everything you do (solves with scrambles and descriptions, saved scrambles, finished lessons, your edited algorithms) is stored in <b>this browser</b>. Use the tools below to keep a copy or to move it to another device.</p></div>
+function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Your data is stored in this browser by default. Sign in from the <b>Account</b> page to automatically save your solves, scrambles, progress, and settings to your private Supabase account. You can still use the backup tools below.</p></div>
 <div class="card"><h3>1. Make a backup</h3><div class="row"><button class="btn pr" id="bkd">⬇ Download backup file</button><button class="btn" id="bkc">📋 Copy backup text</button></div><p class="mu" id="bkm">The file has all your data. Keep it somewhere safe (Drive, email to yourself, your GitHub repo).</p></div>
 <div class="card"><h3>2. Restore on this device</h3><p>Pick a backup file, or paste the backup text.</p><input type="file" id="bkf" accept=".json,application/json"><textarea id="bkt" rows="4" placeholder="…or paste the backup text here"></textarea>
 <div class="sr"><label><input type="radio" name="bkmode" value="merge" checked> Merge (keep what is here and add the new solves)</label></div><div class="sr"><label><input type="radio" name="bkmode" value="replace"> Replace everything on this device</label></div><div class="sr"><input type="checkbox" id="bks"><label for="bks">Also copy my settings and theme (colors, timer style)</label></div><button class="btn pr" id="bki">Import</button><p class="mu" id="bkr"></p></div>
@@ -520,6 +520,136 @@ if(id=="thc"){const j=JSON.stringify({app:"cubelab-theme",theme:THM,timer:TMR});
 if(id=="tha"){try{const o=JSON.parse($("#thx").value);if(o.app!="cubelab-theme")throw 0;THM=o.theme||{};TMR=o.timer||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer();render()}catch(e){m.textContent="That is not a CubeLab theme text."}}}
 document.addEventListener("input",e=>{const d=e.target.dataset;if(!d)return;if(d.th)thSet(d.th,e.target);else if(d.tm)tmOpt(d.tm,e.target)});
 applyTheme();applyTimer();
+/* ---------- SUPABASE ACCOUNT + CLOUD SYNC ---------- */
+let SB=null,cloudUser=null,cloudActiveUserId=null,cloudAuthMode="login";
+let cloudStatusText="Not connected yet.",cloudStatusError=false,cloudSyncing=false,cloudSaving=false,cloudTimer=null;
+const CLOUD_KEYS=new Set(["cl_t","cl_pin","cl_done","cl_ua","cl_uo","cl_w","cl_set","cl_theme","cl_tmr","cl_days"]);
+const cloudConfigured=()=>!!(SB);
+const cloudStatus=(message,isError=false)=>{cloudStatusText=message;cloudStatusError=isError;const el=$("#cloud-status");if(el){el.textContent=message;el.className=isError?"bad":"mu"}};
+const cloudRender=()=>{if(tab=="account")render()};
+function cloudClientInit(){
+  const cfg=window.CUBELAB_SUPABASE||{};
+  const validUrl=typeof cfg.url=="string"&&/^https:\/\/.+\.supabase\.co\/?$/.test(cfg.url)&&!cfg.url.includes("YOUR_PROJECT_REF");
+  const validKey=typeof cfg.publishableKey=="string"&&cfg.publishableKey.length>10&&!cfg.publishableKey.includes("YOUR_SUPABASE_");
+  if(!window.supabase||typeof window.supabase.createClient!="function"){cloudStatusText="Supabase client could not load. Check your internet connection and reload.";cloudStatusError=true;return}
+  if(!validUrl||!validKey){cloudStatusText="Add your Supabase Project URL and publishable key to supabase-config.js.";return}
+  SB=window.supabase.createClient(cfg.url.replace(/\/$/,""),cfg.publishableKey);
+  cloudRender();
+  SB.auth.onAuthStateChange((event,session)=>{
+    // Defer work out of the auth callback so database requests don't block auth state handling.
+    window.setTimeout(()=>{
+      cloudUser=session&&session.user?session.user:null;
+      if(cloudUser){cloudSyncForUser(cloudUser).catch(err=>{cloudActiveUserId=null;cloudStatus(err.message||"Cloud sync failed.",true);cloudRender()})}
+      else{cloudActiveUserId=null;clearTimeout(cloudTimer);cloudSaving=false;cloudStatus("Signed out. Your browser copy is still here.")}
+      cloudRender();
+    },0);
+  });
+  SB.auth.getSession().then(({data,error})=>{
+    if(error)throw error;
+    cloudUser=data.session?.user||null;
+    if(cloudUser)return cloudSyncForUser(cloudUser);
+    cloudStatus("Connected to Supabase. Sign in to turn on cloud sync.");
+    cloudRender();
+  }).catch(err=>{cloudStatus(err.message||"Could not restore your login session.",true);cloudRender()});
+}
+function resetLocalForCloudAccount(){
+  times=[];PIN=[];LD=[];W={};DAYS=[];
+  Object.keys(UX).forEach(k=>delete UX[k]);Object.keys(UO).forEach(k=>delete UO[k]);
+  Object.keys(ST).forEach(k=>delete ST[k]);Object.assign(ST,{insp:15,focus:1,any:(typeof matchMedia!="undefined"&&matchMedia("(pointer:coarse)").matches)?1:0,split:0,sm:"tap",rd:0,pre:"CFOP",ph:["Cross","F2L","OLL","PLL"]});
+  THM={};TMR={};
+  ls.set("cl_t",times);ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);ls.set("cl_set",ST);ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);ls.set("cl_days",DAYS);
+  reapplyUO();applyTheme();applyTimer();
+}
+async function cloudSyncForUser(user){
+  if(!SB||!user||cloudActiveUserId===user.id)return;
+  cloudActiveUserId=user.id;cloudUser=user;cloudSyncing=true;cloudStatus("Loading your CubeLab data…");
+  try{
+    const {data,error}=await SB.from("cubelab_data").select("data").eq("user_id",user.id).maybeSingle();
+    if(error)throw error;
+    const owner=localStorage.getItem("cubelab_cloud_owner");
+    cloudApplying=true;
+    try{
+      if(data&&data.data){
+        if(owner&&owner!==user.id)mergeIn(data.data,"replace",true);
+        else mergeIn(data.data,"merge",true);
+      }else if(owner&&owner!==user.id){
+        // Do not copy another signed-in person's local data into a new account.
+        resetLocalForCloudAccount();
+      }
+    }finally{cloudApplying=false}
+    localStorage.setItem("cubelab_cloud_owner",user.id);
+    await cloudSaveNow();
+    cloudStatus("Synced. Your CubeLab data is saved to this account.");
+    cloudRender();render();
+  }catch(err){cloudActiveUserId=null;throw err}
+  finally{cloudSyncing=false}
+}
+let cloudApplying=false;
+async function cloudSaveNow(){
+  if(!SB||!cloudUser||cloudApplying)return;
+  if(cloudSaving){clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudSaveNow(),700);return}
+  cloudSaving=true;
+  try{
+    const payload={user_id:cloudUser.id,data:bkData(),updated_at:new Date().toISOString()};
+    const {error}=await SB.from("cubelab_data").upsert(payload,{onConflict:"user_id"});
+    if(error)throw error;
+    cloudStatus("All changes synced · "+new Date().toLocaleTimeString());
+  }catch(err){cloudStatus(err.message||"Cloud save failed. Your local copy is safe.",true)}
+  finally{cloudSaving=false}
+}
+function cloudQueueSave(key){
+  if(!CLOUD_KEYS.has(key)||!SB||!cloudUser||cloudApplying)return;
+  clearTimeout(cloudTimer);
+  cloudStatus("Changes waiting to sync…");
+  cloudTimer=setTimeout(()=>cloudSaveNow(),900);
+}
+async function cloudPullNow(){
+  if(!SB||!cloudUser)return;
+  cloudStatus("Checking your cloud data…");
+  const {data,error}=await SB.from("cubelab_data").select("data").eq("user_id",cloudUser.id).maybeSingle();
+  if(error)throw error;
+  if(data&&data.data){cloudApplying=true;try{mergeIn(data.data,"merge",true)}finally{cloudApplying=false}}
+  localStorage.setItem("cubelab_cloud_owner",cloudUser.id);
+  await cloudSaveNow();
+  cloudStatus("Sync complete. This device now has your latest saved data.");
+  render();
+}
+async function cloudAuthAction(action){
+  if(!SB){cloudStatus("Set up Supabase in supabase-config.js first.",true);return}
+  try{
+    if(action=="signout"){
+      await cloudSaveNow();
+      const {error}=await SB.auth.signOut();if(error)throw error;
+      cloudUser=null;cloudActiveUserId=null;cloudStatus("Signed out. Your browser copy is still here.");render();return;
+    }
+    if(action=="sync"){
+      await cloudPullNow();return;
+    }
+    const email=$("#cloud-email")?.value.trim()||"",password=$("#cloud-password")?.value||"";
+    if(!email||!password)throw new Error("Enter your email and password.");
+    cloudStatus(cloudAuthMode=="signup"?"Creating your account…":"Signing in…");
+    if(cloudAuthMode=="signup"){
+      const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+      if(error)throw error;
+      if(data.session?.user){cloudUser=data.session.user;await cloudSyncForUser(cloudUser)}
+      else cloudStatus("Account created. Check your email for the confirmation link, then come back and log in.");
+    }else{
+      const {data,error}=await SB.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      cloudUser=data.user;await cloudSyncForUser(cloudUser);
+    }
+  }catch(err){cloudStatus(err.message||"Authentication failed.",true)}
+}
+function vAccount(){
+  const head=isDesk()?"":mhead("Account");
+  if(!SB)return head+`<div class="card"><h2>☁️ CubeLab account</h2><p>Connect this project to your own Supabase project to enable accounts and cloud saves.</p><ol><li>Create a Supabase project.</li><li>Run the SQL in <code>supabase-setup.sql</code> in the Supabase SQL Editor.</li><li>Put your Project URL and publishable key in <code>supabase-config.js</code>, then reload CubeLab.</li></ol><p class="mu">The publishable key is intended for browser apps. Never put a service-role or secret key in frontend files.</p><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p></div>`;
+  if(cloudUser)return head+`<div class="card"><h2>☁️ Your CubeLab account</h2><p class="mu">Signed in as</p><p><b>${esc(cloudUser.email||"CubeLab user")}</b></p><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p><div class="row"><button class="btn pr" data-auth-action="sync">↻ Sync now</button><button class="btn" data-auth-action="signout">Log out</button></div></div><div class="card"><h3>What gets synced?</h3><p class="mu">Solve history (including scrambles, notes, penalties and split times), saved scrambles, completed lessons, trainer progress, timer settings, themes, and customization preferences. Your original browser storage remains in place as a local copy.</p><p class="mu">Cloud saves run automatically after changes. Use “Sync now” after using CubeLab on another device to pull its latest data.</p></div>`;
+  return head+`<div class="card"><h2>☁️ CubeLab account</h2><p class="mu">Create an account or log in to keep your solves, themes and progress across devices.</p><div class="row"><button class="pill ${cloudAuthMode=="login"?"on":""}" data-auth-mode="login">Log in</button><button class="pill ${cloudAuthMode=="signup"?"on":""}" data-auth-mode="signup">Create account</button></div><form id="cloud-auth-form"><label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" placeholder="you@example.com" required><label for="cloud-password">Password</label><input id="cloud-password" type="password" autocomplete="${cloudAuthMode=="signup"?"new-password":"current-password"}" minlength="6" placeholder="At least 6 characters" required><button class="btn pr" type="submit">${cloudAuthMode=="signup"?"Create account":"Log in"}</button></form><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p><p class="mu">Your data stays private to your account. Keep your password private; CubeLab never needs you to send it to anyone.</p></div>`;
+}
+document.addEventListener("submit",e=>{if(e.target.id=="cloud-auth-form"){e.preventDefault();cloudAuthAction("auth")}});
+document.addEventListener("click",e=>{const t=e.target.closest("[data-auth-mode],[data-auth-action]");if(!t)return;if(t.dataset.authMode){cloudAuthMode=t.dataset.authMode;cloudStatusError=false;render();return}if(t.dataset.authAction)cloudAuthAction(t.dataset.authAction)});
+window.__cubelabOnLocalSave=cloudQueueSave;
+
 /* ---------- HOME: first-visit welcome + today dashboard (streak, goal, next step, daily scramble, journey) ---------- */
 let DAYS=ls.get("cl_days",[]);
 const dayKey=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
@@ -592,5 +722,6 @@ ssave();$("#spv").textContent="Steps: "+phs().join(" \u2192 ")+(ST.split?"":" (s
 addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h)&&h!=tab)go(h)});
 {const h=location.hash.slice(1);if(TABS.some(t=>t[0]==h))tab=h;else if(ST.start=="timer"&&times.length)tab="timer";if(MT[tab])curM=MT[tab]}
 nav();render();
+cloudClientInit();
 $("#mb").onclick=()=>{$("#nav").hidden=!$("#nav").hidden};
 document.addEventListener("click",e=>{if(!e.target.closest("#nav,#mb,#mmenu,#mmore"))$("#nav").hidden=true});
