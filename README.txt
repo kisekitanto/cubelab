@@ -58,3 +58,22 @@ Notes
   - Edited/added algorithms are remembered by the ORIGINAL algorithm text.
     If you change an algorithm directly in app.js, your saved edits for the
     old text will no longer attach to it.
+
+
+Supabase accounts and cloud sync
+--------------------------------
+  1. Open supabase-setup.sql and run it in your Supabase project's SQL Editor.
+  2. Open supabase-config.js and replace YOUR_PROJECT_REF with the project
+     reference from the Supabase Project URL. Paste the project's publishable
+     key in YOUR_SUPABASE_PUBLISHABLE_KEY. Never use a service_role/secret key.
+  3. In Supabase Dashboard > Authentication > URL Configuration, add your
+     published CubeLab URL to the Redirect URLs list. Set Site URL to your
+     published CubeLab address.
+  4. Publish the updated files together on GitHub Pages, then open Account.
+  5. Create an account or log in. If email confirmation is enabled, confirm
+     the email first and then log in.
+
+Supabase stores the existing CubeLab backup bundle in one JSONB row per user.
+Row Level Security restricts each account to its own row. Local browser storage
+remains available as a local copy. Signed-in changes are automatically uploaded;
+use Account > Sync now on another device to merge its latest cloud data.
