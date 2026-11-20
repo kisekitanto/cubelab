@@ -631,8 +631,15 @@ async function cloudAuthAction(action){
     if(cloudAuthMode=="signup"){
       const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
       if(error)throw error;
-      if(data.session?.user){cloudUser=data.session.user;await cloudSyncForUser(cloudUser)}
-      else cloudStatus("Account created. Check your email for the confirmation link, then come back and log in.");
+      const existingAccount = !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+      if(existingAccount){
+        cloudStatus("An account with this email already exists, so no new confirmation email was sent. Switch to Log in and use that account instead. If you forgot its password, email recovery needs working SMTP delivery.",true);
+      }else if(data.session?.user){
+        cloudUser=data.session.user;
+        await cloudSyncForUser(cloudUser);
+      }else{
+        cloudStatus("Account created. Check your email for the confirmation link, then come back and log in.");
+      }
     }else{
       const {data,error}=await SB.auth.signInWithPassword({email,password});
       if(error)throw error;
