@@ -90,7 +90,7 @@ if(ED.i==-2){if(v==id)delete UO[id];else UO[id]=v;ls.set("cl_uo",UO);setMain(id,
 else{const L=UX[id]=UX[id]||[];if(ED.i==-1){if(!L.includes(v))L.push(v)}else L[ED.i]=v;ls.set("cl_ua",UX)}
 ED=null;fill()}}
 /* ---- scramble library: saved + most-used scrambles ---- */
-const IC={account:"☁️",timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",sync:"💾",theme:"🎨",home:"🏠",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
+const IC={account:"☁️",timer:"⏱",scr:"🔀",learn:"🎓",hist:"🗂",prog:"📈",theme:"🎨",home:"🏠",bld:"🙈",cfop:"🧩",roux:"🧱",zz:"⚡",zb:"💎",trainer:"🎯"};
 function scInfo(){const u=$("#su"),r=times.filter(x=>x.s==T.scr).map(x=>x.t);if(u)u.textContent=r.length?`used ${r.length}× · best ${fmt(Math.min(...r))}`:(MB()?"":"new scramble");const b=$("#sv");if(b)b.textContent=(CS()||MB())?(PIN.includes(T.scr)?"★":"☆"):(PIN.includes(T.scr)?"★ Saved":"☆ Save")}
 const sst=s=>{const r=times.filter(x=>x.s==s).map(x=>x.t);return r.length?`used ${r.length}× · best ${fmt(Math.min(...r))} · avg ${fmt(r.reduce((a,b)=>a+b,0)/r.length)}`:"not solved yet"};
 const srow=s=>`<div class="card"><code class="alg" data-c="${s}" title="Tap to copy">${s}</code><div class="row"><span class="mu">${sst(s)}</span><span style="flex:1"></span><button class="mb" data-x="use" data-s="${s}">▶ Use</button><button class="mb" data-x="pin" data-s="${s}">${PIN.includes(s)?"★ Saved":"☆ Save"}</button></div></div>`;
@@ -172,13 +172,13 @@ const ALL=[];for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>A
 const inv=a=>a.split(" ").reverse().map(x=>x.endsWith("'")?x.slice(0,-1):x.endsWith("2")?x:x+"'").join(" ");
 
 /* ---------- STATE ---------- */
-const TABS=[["home","Home"],["account","Account"],["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["sync","Backup & Sync"],["theme","Customize"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
+const TABS=[["home","Home"],["account","Account"],["timer","Timer"],["scr","Scrambles"],["hist","Solves"],["prog","Progress"],["theme","Customize"],["learn","Beginner method"],["bld","Blindfold"],["cfop","CFOP"],["roux","Roux"],["zz","ZZ"],["zb","ZBLL"],["trainer","Trainer"]],MT={cfop:"CFOP",roux:"Roux",zz:"ZZ"};
 let tab="home",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.get("cl_w",{}),T={s:"idle",t0:0,hold:0,scr:""};
 
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,account:vAccount,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
+function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,account:vAccount,prog:vProg,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="trainer")nextCase()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -349,7 +349,7 @@ else h=`<p class="${PQ.ans==n?"ok":"bad"}"><b>${PQ.ans==n?"\u2713 Correct!":"\u2
 e.innerHTML=h}
 function qAct(t){const k=t.dataset.q;if(k=="n")return pqNew();if(k=="w"){qq(async()=>{PQ.api.set(PQ.sc.st);for(const m of PQ.sc.f.split(" "))await PQ.api.go(m)});return}PQ.ans=+k;pqShow()}
 const vPred=()=>`<div class="card"><h3>Practice: predict the edges</h3><p class="mu">Drag the cube. The last F2L pair (front-right slot) is not in yet. Decide how many last-layer edges will be yellow on top after you insert it with R and U moves.</p><canvas id="qc" class="cb" width="600" height="600"></canvas><div id="pq"></div></div>`;
-/* ---------- MOBILE TIMER, SOLVES, PROGRESS, BACKUP & SYNC ---------- */
+/* ---------- MOBILE TIMER, SOLVES, PROGRESS ---------- */
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const MOBT=["home","timer","hist","prog"],MB=()=>!!(document.body&&document.body.classList.contains("mob")),saveT=()=>ls.set("cl_t",times);
 const fdate=d=>d?new Date(d).toLocaleString([],{dateStyle:"medium",timeStyle:"short"}):"older solve (no date)";
@@ -402,8 +402,7 @@ const sp=times.filter(x=>x.sp).slice(-50),K=sp.length?sp[sp.length-1].ph.join("|
 const sb=S.length>1?`<div class="card"><h3>Average per step (last ${S.length} split solves)</h3>${bars(sp[sp.length-1].ph.map((_,i)=>S.reduce((a,x)=>a+deltas(x)[i],0)/S.length),sp[sp.length-1].ph)}</div>`:"";
 const c=`<div class="card"><h2>📈 Progress</h2>${chart()}</div><div class="card"><h3>Records</h3><table class="rt"><tr><th></th><th>current</th><th>best</th></tr>${rows.map(([a,b,c2])=>`<tr><th>${a}</th><td>${fm(b)}</td><td>${fm(c2)}</td></tr>`).join("")}</table><p class="mu">Solves: ${times.length} · DNF: ${dnf} · Mean: ${fm(mean)} · Deviation: ${fm(sd)}</p></div>${sb}`;
 return (isDesk()?"":mhead("Progress"))+c+(isDesk()?"":mnav())}
-/* ---- backup, restore and GitHub Gist sync ---- */
-const GH={tok:ls.get("cl_tok",""),gid:ls.get("cl_gid","")},FNB="cubelab-backup.json";
+/* ---- shared Supabase cloud data snapshot and merge ---- */
 const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_set:ST,cl_theme:THM,cl_tmr:TMR,cl_days:DAYS}});
 const tkeys=a=>{const seen={};return a.map(x=>{const k=x.d?x.d+"|"+x.s:"|"+x.s+"|"+x.t;seen[k]=(seen[k]||0)+1;return k+"#"+seen[k]})};
 function mergeTimes(a,b){const m=new Map(),ka=tkeys(a),kb=tkeys(b);a.forEach((x,i)=>m.set(ka[i],x));let add=0;b.forEach((y,i)=>{const x=m.get(kb[i]);if(!x){m.set(kb[i],y);add++}else if((y.m||y.d||0)>(x.m||x.d||0))m.set(kb[i],y)});const all=[...m.values()];return{list:[...all.filter(x=>!x.d),...all.filter(x=>x.d).sort((p,q)=>p.d-q.d)],add}}
@@ -414,32 +413,7 @@ else{const r=mergeTimes(times,D.cl_t);times=r.list;add=r.add;(D.cl_pin||[]).forE
 for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k])}
 if(withSet&&D.cl_set){if(mode=="replace")Object.keys(ST).forEach(k=>delete ST[k]);Object.assign(ST,D.cl_set);ssave()}if(withSet&&D.cl_theme){THM=D.cl_theme;TMR=D.cl_tmr||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer()}
 (D.cl_days||[]).forEach(x=>{if(!DAYS.includes(x))DAYS.push(x)});ls.set("cl_days",DAYS);saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);reapplyUO();return{add,total:times.length}}
-function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Your data is stored in this browser by default. Sign in from the <b>Account</b> page to automatically save your solves, scrambles, progress, and settings to your private Supabase account. You can still use the backup tools below.</p></div>
-<div class="card"><h3>1. Make a backup</h3><div class="row"><button class="btn pr" id="bkd">⬇ Download backup file</button><button class="btn" id="bkc">📋 Copy backup text</button></div><p class="mu" id="bkm">The file has all your data. Keep it somewhere safe (Drive, email to yourself, your GitHub repo).</p></div>
-<div class="card"><h3>2. Restore on this device</h3><p>Pick a backup file, or paste the backup text.</p><input type="file" id="bkf" accept=".json,application/json"><textarea id="bkt" rows="4" placeholder="…or paste the backup text here"></textarea>
-<div class="sr"><label><input type="radio" name="bkmode" value="merge" checked> Merge (keep what is here and add the new solves)</label></div><div class="sr"><label><input type="radio" name="bkmode" value="replace"> Replace everything on this device</label></div><div class="sr"><input type="checkbox" id="bks"><label for="bks">Also copy my settings and theme (colors, timer style)</label></div><button class="btn pr" id="bki">Import</button><p class="mu" id="bkr"></p></div>
-<div class="card"><h3>3. Sync through GitHub (optional)</h3><p>Your data is kept in a <b>private gist</b> on your own GitHub account. Press <b>Sync now</b> on every device and they will all end up with the same solves.</p>
-<ol class="mu"><li>On GitHub: Settings → Developer settings → Personal access tokens → <b>Tokens (classic)</b> → Generate new token.</li><li>Tick only <b>gist</b>, create it and paste it below.</li><li>Press Sync now. On another device paste the same token and press Sync now there.</li></ol>
-<input id="gtk" type="password" placeholder="GitHub token (only the “gist” permission)" autocomplete="off"><input id="ggid" placeholder="Gist ID (filled in automatically)" autocomplete="off"><div class="sr"><input type="checkbox" id="gst"><label for="gst">Also sync my settings and theme</label></div><div class="row"><button class="btn pr" id="gsy">🔄 Sync now</button><button class="btn" id="gup">⬆ Upload only</button><button class="btn" id="gdn">⬇ Download only</button></div><div class="row" style="margin-top:8px"><button class="mb" id="gsv">Save token</button><button class="mb" id="gfo">Forget token</button></div><p class="mu" id="gms"></p><p class="mu">The token stays in this browser only. Anyone who can use this browser could use it, so give it only the gist permission. Sync needs internet and a normal website (it can be blocked inside some preview windows).</p></div>`}
-function syncInit(){$("#gtk").value=GH.tok;$("#ggid").value=GH.gid}
-async function gh(method,path,body){const r=await fetch("https://api.github.com"+path,{method,headers:{Authorization:"Bearer "+GH.tok,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error("GitHub answered "+r.status+(r.status==401?" (check the token)":r.status==403?" (the token needs the gist permission)":r.status==404?" (gist not found)":""));return r.json()}
-async function gPush(){const content=JSON.stringify(bkData());if(GH.gid)await gh("PATCH","/gists/"+GH.gid,{files:{[FNB]:{content}}});else{const g=await gh("POST","/gists",{description:"CubeLab backup",public:false,files:{[FNB]:{content}}});GH.gid=g.id;ls.set("cl_gid",g.id);$("#ggid").value=g.id}}
-async function gPull(){if(!GH.gid){const l=await gh("GET","/gists?per_page=100"),f=l.find(x=>x.files&&x.files[FNB]);if(!f)throw new Error("No CubeLab backup on this GitHub account yet");GH.gid=f.id;ls.set("cl_gid",f.id);$("#ggid").value=f.id}
-const g=await gh("GET","/gists/"+GH.gid),f=g.files&&g.files[FNB];if(!f)throw new Error("That gist has no "+FNB);let txt=f.content;if(f.truncated)txt=await(await fetch(f.raw_url)).text();return JSON.parse(txt)}
-async function syncAct(id){const msg=(el,t,ok)=>{const e=$(el);if(e){e.textContent=t;e.className=ok===false?"bad":ok?"ok":"mu"}};
-try{
-if(id=="bkd"){const j=JSON.stringify(bkData(),null,1),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([j],{type:"application/json"}));a.download="cubelab-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("#bkt").value=j;msg("#bkm","Backup file created. If nothing was downloaded, the text is in the box below: copy it into a file.",true)}
-else if(id=="bkc"){const j=JSON.stringify(bkData());$("#bkt").value=j;try{await navigator.clipboard.writeText(j);msg("#bkm","Copied! Paste it on the other device (Restore, paste box).",true)}catch(e){$("#bkt").select();msg("#bkm","Could not copy automatically. The text is in the box below: select it and copy.",null)}}
-else if(id=="bki"){const txt=$("#bkt").value.trim();if(!txt)throw new Error("Paste the backup text or choose a file first");const mode=(document.querySelector("input[name=bkmode]:checked")||{}).value||"merge";if(mode=="replace"&&!confirm("Replace everything on this device with the backup?"))return;
-const r=mergeIn(JSON.parse(txt),mode,$("#bks").checked);msg("#bkr",`Done: ${r.add} ${mode=="replace"?"solves loaded":"new solves added"}, ${r.total} solves in total.`,true)}
-else if(id=="gsv"||id=="gup"||id=="gdn"||id=="gsy"||id=="gfo"){
-if(id=="gfo"){GH.tok="";GH.gid="";ls.set("cl_tok","");ls.set("cl_gid","");syncInit();msg("#gms","Token and gist ID removed from this browser.",true);return}
-GH.tok=$("#gtk").value.trim();GH.gid=$("#ggid").value.trim();ls.set("cl_tok",GH.tok);ls.set("cl_gid",GH.gid);if(id=="gsv"){msg("#gms","Saved.",true);return}
-if(!GH.tok)throw new Error("Paste your GitHub token first");msg("#gms","Working…");let t="";
-if(id=="gdn"||id=="gsy"){try{const r=mergeIn(await gPull(),"merge",!!($("#gst")&&$("#gst").checked));t+=`Downloaded: ${r.add} new solves. `}catch(e){if(id=="gdn"||!/No CubeLab backup/.test(e.message))throw e}}
-if(id=="gup"||id=="gsy"){await gPush();t+="Uploaded."}msg("#gms",t,true)}
-}catch(e){msg(id[0]=="b"&&id!="bkd"&&id!="bkc"?"#bkr":id[0]=="g"?"#gms":"#bkm",(e instanceof TypeError?"Could not reach GitHub (no internet, or this window blocks network access). ":"")+e.message,false)}}
-sdWire();
+
 /* ---------- CUSTOMIZE: colors and look for the whole site + a separate timer style ---------- */
 const TKEYS=[["bg","Page background"],["cd","Cards"],["bar","Bars, panels and pop-ups"],["tx","Text"],["mu","Soft text"],["ac","Accent"],["bd","Borders"],["ok","Good (green)"],["bad","Bad (red)"]];
 const TPRE={
@@ -493,7 +467,7 @@ tmSave();const o=$("#tmv_"+k);if(o)o.textContent=k=="size"?v+"%":k=="ang"?v+"°"
 function tmClear(k){if(k=="fbg"){delete TMR.fbg;delete TMR.g2;delete TMR.ang}else if(k=="ff")delete TMR.ff;else delete TMR[k];tmSave();render()}
 const fsel=(cur,at)=>`<select ${at}>${FONTS.map(([n,v],i)=>`<option value="${i}" ${v==cur?"selected":""}>${n}</option>`).join("")}</select>`;
 function vTheme(){const g=THM.g||{},c=k=>curCol(k),tcol=(k,l,d)=>`<label class="cl"><span>${l}</span><span><input type="color" data-tm="${k}" value="${TMR[k]||d}"><button class="mb xs" data-tmx="${k}" title="Back to automatic">auto</button></span></label>`;
-return `<div class="card"><h2>🎨 Customize</h2><p>Pick colors and a look for the <b>whole site</b>. Your choices are saved in this browser (and travel with a backup if you tick “also copy my settings and theme”). The <b>solving screen (focus mode) is not changed by the site colors</b>: it has its own timer style further down.</p></div>
+return `<div class="card"><h2>🎨 Customize</h2><p>Pick colors and a look for the <b>whole site</b>. Your choices are saved in this browser and synced automatically when you are signed in. The <b>solving screen (focus mode) is not changed by the site colors</b>: it has its own timer style further down.</p></div>
 <div class="card"><h3>Presets</h3><div class="swg">${Object.entries(TPRE).map(([n,p])=>`<button class="sw ${THM.pre==n?"on":""}" data-pr="${esc(n)}"><span class="sws"><i style="background:${p?p.bg:"#9aa0aa"}"></i><i style="background:${p?p.cd:"#d7dae0"}"></i><i style="background:${p?p.bar:"#c4c9d2"}"></i><i style="background:${p?p.ac:"#2563eb"}"></i></span>${n}</button>`).join("")}</div></div>
 <div class="card"><h3>Colors</h3><div class="cg">${TKEYS.map(([k,l])=>`<label class="cl"><span>${l}</span><input type="color" data-th="${k}" value="${c(k)}"></label>`).join("")}</div>
 <div class="sr" style="margin-top:12px"><input type="checkbox" id="gon" data-th="gon" ${g.on?"checked":""}><label for="gon">Gradient background</label></div>
@@ -603,17 +577,6 @@ function cloudQueueSave(key){
   cloudStatus("Changes waiting to sync…");
   cloudTimer=setTimeout(()=>cloudSaveNow(),900);
 }
-async function cloudPullNow(){
-  if(!SB||!cloudUser)return;
-  cloudStatus("Checking your cloud data…");
-  const {data,error}=await SB.from("cubelab_data").select("data").eq("user_id",cloudUser.id).maybeSingle();
-  if(error)throw error;
-  if(data&&data.data){cloudApplying=true;try{mergeIn(data.data,"merge",true)}finally{cloudApplying=false}}
-  localStorage.setItem("cubelab_cloud_owner",cloudUser.id);
-  await cloudSaveNow();
-  cloudStatus("Sync complete. This device now has your latest saved data.");
-  render();
-}
 async function cloudAuthAction(action){
   if(!SB){cloudStatus("Set up Supabase in supabase-config.js first.",true);return}
   try{
@@ -621,9 +584,6 @@ async function cloudAuthAction(action){
       await cloudSaveNow();
       const {error}=await SB.auth.signOut();if(error)throw error;
       cloudUser=null;cloudActiveUserId=null;cloudStatus("Signed out. Your browser copy is still here.");render();return;
-    }
-    if(action=="sync"){
-      await cloudPullNow();return;
     }
     const email=$("#cloud-email")?.value.trim()||"",password=$("#cloud-password")?.value||"";
     if(!email||!password)throw new Error("Enter your email and password.");
@@ -650,7 +610,7 @@ async function cloudAuthAction(action){
 function vAccount(){
   const head=isDesk()?"":mhead("Account");
   if(!SB)return head+`<div class="card"><h2>☁️ CubeLab account</h2><p>Connect this project to your own Supabase project to enable accounts and cloud saves.</p><ol><li>Create a Supabase project.</li><li>Run the SQL in <code>supabase-setup.sql</code> in the Supabase SQL Editor.</li><li>Put your Project URL and publishable key in <code>supabase-config.js</code>, then reload CubeLab.</li></ol><p class="mu">The publishable key is intended for browser apps. Never put a service-role or secret key in frontend files.</p><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p></div>`;
-  if(cloudUser)return head+`<div class="card"><h2>☁️ Your CubeLab account</h2><p class="mu">Signed in as</p><p><b>${esc(cloudUser.email||"CubeLab user")}</b></p><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p><div class="row"><button class="btn pr" data-auth-action="sync">↻ Sync now</button><button class="btn" data-auth-action="signout">Log out</button></div></div><div class="card"><h3>What gets synced?</h3><p class="mu">Solve history (including scrambles, notes, penalties and split times), saved scrambles, completed lessons, trainer progress, timer settings, themes, and customization preferences. Your original browser storage remains in place as a local copy.</p><p class="mu">Cloud saves run automatically after changes. Use “Sync now” after using CubeLab on another device to pull its latest data.</p></div>`;
+  if(cloudUser)return head+`<div class="card"><h2>☁️ Your CubeLab account</h2><p class="mu">Signed in as</p><p><b>${esc(cloudUser.email||"CubeLab user")}</b></p><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p><div class="row"><button class="btn" data-auth-action="signout">Log out</button></div></div><div class="card"><h3>What gets synced?</h3><p class="mu">Solve history (including scrambles, notes, penalties and split times), saved scrambles, completed lessons, trainer progress, timer settings, themes, and customization preferences. Your original browser storage remains in place as a local copy.</p><p class="mu">Cloud saves run automatically after changes.</p></div>`;
   return head+`<div class="card"><h2>☁️ CubeLab account</h2><p class="mu">Create an account or log in to keep your solves, themes and progress across devices.</p><div class="row"><button class="pill ${cloudAuthMode=="login"?"on":""}" data-auth-mode="login">Log in</button><button class="pill ${cloudAuthMode=="signup"?"on":""}" data-auth-mode="signup">Create account</button></div><form id="cloud-auth-form"><label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" placeholder="you@example.com" required><label for="cloud-password">Password</label><input id="cloud-password" type="password" autocomplete="${cloudAuthMode=="signup"?"new-password":"current-password"}" minlength="6" placeholder="At least 6 characters" required><button class="btn pr" type="submit">${cloudAuthMode=="signup"?"Create account":"Log in"}</button></form><p id="cloud-status" class="${cloudStatusError?"bad":"mu"}">${esc(cloudStatusText)}</p><p class="mu">Your data stays private to your account. Keep your password private; CubeLab never needs you to send it to anyone.</p></div>`;
 }
 document.addEventListener("submit",e=>{if(e.target.id=="cloud-auth-form"){e.preventDefault();cloudAuthAction("auth")}});
@@ -701,13 +661,13 @@ const spin=()=>{if(!ok())return;yw+=.006;api.view(yw,.5);requestAnimationFrame(s
 (async()=>{while(ok()){const m=[];api.sp=1;for(let i=0;i<8&&ok();i++){const x=MV_[Math.random()*MV_.length|0];m.push(x);await api.go(x);await wait(100)}await wait(600);api.sp=2.4;for(const x of m.reverse()){if(!ok())return;await api.go(iv(x))}await wait(1200)}})()}
 document.addEventListener("change",e=>{if(e.target.id=="hstart"){ST.start=e.target.checked?"timer":"home";ssave()}});
 /* ---------- EVENTS ---------- */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#bset2,#xs,#blp,[data-si],#mdel,#mnote,#mmenu,#mmore,#hmore,[data-lv],[data-hg],[data-gl],[data-pr],[data-tmx],#thr,#tmr,#thc,#tha,#bkd,#bkc,#bki,#gsy,#gup,#gdn,#gsv,#gfo");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m],[data-c],[data-a],[data-e],[data-x],[data-l],[data-d],[data-p],[data-b],[data-q],#ns,#dl,#ca,#cb,#rp,#sv,#xc,#p2,#pd,#bset,#bset2,#xs,#blp,[data-si],#mdel,#mnote,#mmenu,#mmore,#hmore,[data-lv],[data-hg],[data-gl],[data-pr],[data-tmx],#thr,#tmr,#thc,#tha");if(!t)return;
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
 if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){actDay();const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
 if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
-if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.lv)return homeLevel(t.dataset.lv,t.dataset.first);if(t.dataset.hg)return homeGo(t.dataset.hg);if(t.dataset.gl){ST.goal=+t.dataset.gl;ssave();return render()}if(t.dataset.pr)return thPreset(t.dataset.pr);if(t.dataset.tmx)return tmClear(t.dataset.tmx);if(/^(thr|tmr|thc|tha)$/.test(t.id))return thAct(t.id);if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(/^(bkd|bkc|bki|gsy|gup|gdn|gsv|gfo)$/.test(t.id))return syncAct(t.id);if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
+if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.lv)return homeLevel(t.dataset.lv,t.dataset.first);if(t.dataset.hg)return homeGo(t.dataset.hg);if(t.dataset.gl){ST.goal=+t.dataset.gl;ssave();return render()}if(t.dataset.pr)return thPreset(t.dataset.pr);if(t.dataset.tmx)return tmClear(t.dataset.tmx);if(/^(thr|tmr|thc|tha)$/.test(t.id))return thAct(t.id);if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
 document.addEventListener("input",e=>{if(e.target.id=="q")fill();if(e.target.id=="hq"){HQ=e.target.value;HN=50;histFill()}});
