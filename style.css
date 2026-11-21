@@ -143,7 +143,7 @@ body.cs #tz{padding:0 calc(min(300px,26vw) + 16px)}
 body.cs #pst{gap:2px 14px}body.cs #pst .mu{font-size:.95rem}
 body.cs #pst .mu{font-size:clamp(.78rem,1.1vw,.95rem)}body.cs #pst{gap:2px 12px}
 
-/* ---------- solve dialog, solves list and progress ---------- */
+/* ---------- solve dialog, solves list, progress, backup ---------- */
 #sd{position:fixed;inset:0;background:#000b;z-index:55;display:flex;align-items:center;justify-content:center;padding:12px}#sd[hidden]{display:none}
 .vc{background:var(--dlg,var(--cd))}
 textarea{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;width:100%;margin:6px 0;resize:vertical}
@@ -306,3 +306,5 @@ body.hu-tao .eyebrow{color:#ff9b65}body.hu-tao .cta,body.hu-tao .btn.pr{backgrou
 body.hu-tao .ic{filter:sepia(1) saturate(2) hue-rotate(325deg);text-shadow:0 0 8px #ff7048}body.hu-tao #clogo{background:#d94335;color:#fff1df}
 body.hu-tao #mbar{background:rgba(45,13,18,.72);border:1px solid #8a3730}
 @media(max-width:720px){body.hu-tao{background:#210b10}body.hu-tao .hero{background:linear-gradient(180deg,rgba(55,17,23,.55),rgba(55,17,23,.76))}}
+
+#ht,body.mob .mtitle{cursor:pointer}#hu-tao-quiz[hidden]{display:none}#hu-tao-quiz{position:fixed;inset:0;z-index:120;background:rgba(10,5,8,.82);display:grid;place-items:center;padding:18px;color:#fff1df}#hu-tao-quiz .hu-quiz-card{position:relative;width:min(520px,100%);border:1px solid #aa4a3d;border-radius:20px;padding:26px;background:linear-gradient(145deg,#351319,#1b1018);box-shadow:0 20px 70px #000b}#hu-tao-quiz h2{margin:10px 34px 18px 0}#hu-tao-quiz .hu-quiz-close{position:absolute;right:14px;top:12px;border:0;background:transparent;color:#fff1df;font-size:1.8rem;cursor:pointer}#hu-tao-quiz .hu-quiz-answers{display:grid;gap:10px}#hu-tao-quiz .hu-quiz-answer{text-align:left;padding:12px 14px;background:#542229;color:#fff1df;border:1px solid #965046}#hu-tao-quiz .hu-quiz-answer:hover{background:#78332f;border-color:#ff9b65}#hu-tao-quiz .hu-quiz-feedback{min-height:1.4em;color:#ffb49e;margin:10px 0 0}
