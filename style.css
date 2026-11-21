@@ -1,4 +1,4 @@
-:root{--bg:#f5f4ef;--cd:#fff;--tx:#1c1c1e;--mu:#6c6c72;--ac:#2563eb;--bd:#e3e1d8;--ok:#16a34a;--bad:#dc2626;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+﻿:root{--bg:#f5f4ef;--cd:#fff;--tx:#1c1c1e;--mu:#6c6c72;--ac:#2563eb;--bd:#e3e1d8;--ok:#16a34a;--bad:#dc2626;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111113;--cd:#1c1c1f;--tx:#f2f2f4;--mu:#9a9aa2;--ac:#6b9bff;--bd:#2f2f34;--ok:#4ade80;--bad:#f87171;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#111113;--cd:#1c1c1f;--tx:#f2f2f4;--mu:#9a9aa2;--ac:#6b9bff;--bd:#2f2f34;--ok:#4ade80;--bad:#f87171;color-scheme:dark}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
@@ -55,7 +55,7 @@ code.alg{transition:border-color .12s,background .12s}code.alg:hover{border-colo
 #tz{border-radius:26px;box-shadow:var(--sh);padding:8vh 12px;background:linear-gradient(180deg,var(--cd),color-mix(in srgb,var(--cd) 70%,var(--bg)))}#tm{letter-spacing:-.02em}
 .st{border-radius:14px;box-shadow:var(--sh)}
 .sch{display:flex;justify-content:space-between;align-items:center}#scc #sc{margin:6px 0 12px;font-size:1.1rem}.tb{justify-content:center}
-summary{list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:"▸ ";color:var(--ac)}details[open]>summary::before{content:"▾ "}
+summary{list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:"â–¸ ";color:var(--ac)}details[open]>summary::before{content:"â–¾ "}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 .cb{width:min(100%,340px);aspect-ratio:1;display:block;margin:0 auto;touch-action:none;cursor:grab}
 #vw{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}#vw[hidden]{display:none}
@@ -294,3 +294,15 @@ body.mob .hero{background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,
 @media(prefers-reduced-motion:reduce){.cta:hover,.tile:hover{transform:none}}
 
 body.onhome:not(.mob) main{max-width:1000px}body.onhome:not(.mob) .hero h1{max-width:12em}
+
+
+
+/* Hidden Hu Tao theme with a gentle crossfade slideshow. */
+body.hu-tao{--bg:#210b10;--cd:#3a171c;--bar:#501d22;--tx:#fff1df;--mu:#e6b7a2;--ac:#ff583d;--bd:#8a3730;--ok:#9acb83;--bad:#ff8c73;color-scheme:dark;background:#210b10}
+#hu-tao-scene{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;background-position:center;background-size:cover;background-repeat:no-repeat;transition:opacity 1.8s ease}
+#hu-tao-scene.visible{opacity:1}
+body.hu-tao main{position:relative;z-index:1}body.hu-tao .hero{background:linear-gradient(115deg,rgba(55,17,23,.78),rgba(94,29,34,.52));border-color:#a64a3d}
+body.hu-tao .eyebrow{color:#ff9b65}body.hu-tao .cta,body.hu-tao .btn.pr{background:#d94335;color:#fff1df}body.hu-tao .tile:hover,body.hu-tao nav button.on{border-color:#ff8c57}
+body.hu-tao .ic{filter:sepia(1) saturate(2) hue-rotate(325deg);text-shadow:0 0 8px #ff7048}body.hu-tao #clogo{background:#d94335;color:#fff1df}
+body.hu-tao #mbar{background:rgba(45,13,18,.72);border:1px solid #8a3730}
+@media(max-width:720px){body.hu-tao{background:#210b10}body.hu-tao .hero{background:linear-gradient(180deg,rgba(55,17,23,.55),rgba(55,17,23,.76))}}
