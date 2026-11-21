@@ -470,7 +470,7 @@ c.ac?s.setProperty("--onac",lum(c.ac)>.45?"#111111":"#ffffff"):s.removeProperty(
 THM.ff?s.setProperty("--ff",THM.ff):s.removeProperty("--ff");
 THM.fs&&THM.fs!=100?r.setProperty("--fs",THM.fs/100):r.removeProperty("--fs");
 if(THM.rad!=null){s.setProperty("--r",THM.rad+"px");s.setProperty("--rb",Math.round(THM.rad*.7)+"px");s.setProperty("--rbp",Math.round(THM.rad*2)+"px")}else["--r","--rb","--rbp"].forEach(k=>s.removeProperty(k));
-b.classList.toggle("nosnp",!!THM.nosnp);b.classList.toggle("nopst",!!THM.nopst)}
+b.classList.toggle("nosnp",!!THM.nosnp);b.classList.toggle("nopst",!!THM.nopst);b.classList.toggle("hu-tao",!!ls.get("cl_hutao",false))}
 function applyTimer(){const b=document.body,s=b.style,m=TMR;
 [["fg","--tfg"],["hold","--thold"],["ready","--tready"],["mu","--tmu"]].forEach(([k,v])=>m[k]?s.setProperty(v,m[k]):s.removeProperty(v));
 m.fbg?s.setProperty("--fbg",m.g2?`linear-gradient(${m.ang==null?180:m.ang}deg,${m.fbg},${m.g2})`:m.fbg):s.removeProperty("--fbg");
@@ -520,6 +520,12 @@ if(id=="thc"){const j=JSON.stringify({app:"cubelab-theme",theme:THM,timer:TMR});
 if(id=="tha"){try{const o=JSON.parse($("#thx").value);if(o.app!="cubelab-theme")throw 0;THM=o.theme||{};TMR=o.timer||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer();render()}catch(e){m.textContent="That is not a CubeLab theme text."}}}
 document.addEventListener("input",e=>{const d=e.target.dataset;if(!d)return;if(d.th)thSet(d.th,e.target);else if(d.tm)tmOpt(d.tm,e.target)});
 applyTheme();applyTimer();
+const huTaoScenes={landscape:["hu-tao-landscape-01.jpg","hu-tao-landscape-02.jpg","hu-tao-landscape-03.jpg","hu-tao-landscape-04.jpg","hu-tao-landscape-05.jpg"],portrait:["hu-tao-portrait-01.jpg","hu-tao-portrait-02.jpg","hu-tao-portrait-03.jpg","hu-tao-portrait-04.jpg","hu-tao-portrait-05.jpg","hu-tao-portrait-06.jpg"]};let huTaoTimer=null,huTaoFade=null,huTaoIndex=-1;
+function huTaoScene(){if(!document.body.classList.contains("hu-tao"))return;let el=document.getElementById("hu-tao-scene");if(!el){el=document.createElement("div");el.id="hu-tao-scene";el.setAttribute("aria-hidden","true");document.body.prepend(el)}el.classList.remove("visible");clearTimeout(huTaoFade);huTaoFade=setTimeout(()=>{const mobile=matchMedia("(max-width:720px)").matches,list=huTaoScenes[mobile?"portrait":"landscape"];huTaoIndex=(huTaoIndex+1)%list.length;el.style.backgroundImage='linear-gradient(rgba(28,9,14,.76),rgba(28,9,14,.84)),url("assets/'+list[huTaoIndex]+'")';requestAnimationFrame(()=>el.classList.add("visible"))},700)}
+function huTaoToggle(){const on=!ls.get("cl_hutao",false);ls.set("cl_hutao",on);document.body.classList.toggle("hu-tao",on);clearInterval(huTaoTimer);clearTimeout(huTaoFade);const el=document.getElementById("hu-tao-scene");if(el)el.classList.remove("visible");huTaoIndex=-1;if(on){huTaoScene();huTaoTimer=setInterval(huTaoScene,9000)}}
+if(ls.get("cl_hutao",false)){huTaoScene();huTaoTimer=setInterval(huTaoScene,9000)}
+let huTaoKeys="";document.addEventListener("keydown",e=>{if(e.ctrlKey||e.altKey||e.metaKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;huTaoKeys=(huTaoKeys+e.key.toLowerCase()).slice(-5);if(huTaoKeys==="hutao"){huTaoToggle();huTaoKeys=""}});
+window.addEventListener("resize",()=>{if(document.body.classList.contains("hu-tao")){huTaoIndex=-1;huTaoScene()}});
 /* ---------- SUPABASE ACCOUNT + CLOUD SYNC ---------- */
 let SB=null,cloudUser=null,cloudActiveUserId=null,cloudAuthMode="login";
 let cloudStatusText="Not connected yet.",cloudStatusError=false,cloudSyncing=false,cloudSaving=false,cloudTimer=null;
@@ -559,6 +565,7 @@ function resetLocalForCloudAccount(){
   THM={};TMR={};
   ls.set("cl_t",times);ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);ls.set("cl_set",ST);ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);ls.set("cl_days",DAYS);
   reapplyUO();applyTheme();applyTimer();
+
 }
 async function cloudSyncForUser(user){
   if(!SB||!user||cloudActiveUserId===user.id)return;
@@ -631,8 +638,15 @@ async function cloudAuthAction(action){
     if(cloudAuthMode=="signup"){
       const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
       if(error)throw error;
-      if(data.session?.user){cloudUser=data.session.user;await cloudSyncForUser(cloudUser)}
-      else cloudStatus("Account created. Check your email for the confirmation link, then come back and log in.");
+      const existingAccount = !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+      if(existingAccount){
+        cloudStatus("An account with this email already exists, so no new confirmation email was sent. Switch to Log in and use that account instead. If you forgot its password, email recovery needs working SMTP delivery.",true);
+      }else if(data.session?.user){
+        cloudUser=data.session.user;
+        await cloudSyncForUser(cloudUser);
+      }else{
+        cloudStatus("Account created. Check your email for the confirmation link, then come back and log in.");
+      }
     }else{
       const {data,error}=await SB.auth.signInWithPassword({email,password});
       if(error)throw error;
