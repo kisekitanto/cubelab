@@ -178,7 +178,7 @@ let tab="home",curM="CFOP",PIN=ls.get("cl_pin",[]),times=ls.get("cl_t",[]),W=ls.
 /* ---------- NAV ---------- */
 function nav(){$("#ht").textContent="CubeLab · "+TABS.find(x=>x[0]==tab)[1];$("#nav").innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k==tab?"on":""}"><span class="ic">${IC[k]||""}</span> ${l}</button>`).join("")}
 function go(t){clearTimeout(T.hold);T.s="idle";T.i0=0;tfocus(0);tab=t;if(MT[t])curM=MT[t];$("#nav").hidden=true;nav();render();try{location.hash=t}catch(e){}scrollTo(0,0)}
-function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,account:vAccount,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="sync")syncInit();if(tab=="trainer")nextCase()}
+function render(){{const dk=isDesk();document.body.classList.toggle("cs",tab=="timer"&&dk);document.body.classList.toggle("onhome",tab=="home");document.body.classList.toggle("mob",!dk&&MOBT.includes(tab))}$("#app").innerHTML=({cfop:vAlgs,roux:vAlgs,zz:vAlgs,zb:vZb,scr:vScr,learn:vLearn2,bld:vBld,timer:()=>isDesk()?vTimerDesk():vTimerMob(),hist:vHist,home:vHome,account:vAccount,prog:vProg,sync:vSync,theme:vTheme,trainer:vTrainer})[tab]();if(MT[tab]||tab=="zb")fill();if(tab=="learn"){PR=cube3d($("#pc"),cube());pqInit()}if(tab=="timer"){newScr();stats();tInit();msubSet()}if(tab=="hist")histFill();if(tab=="home")homeInit();if(tab=="sync")syncInit();if(tab=="trainer")trInit()}
 
 /* ---------- LEARN ---------- */
 /* ---------- ALGS ---------- */
@@ -265,16 +265,198 @@ function tcancel(){if(!["tap","insp","hold","ready","run","pause","rwait"].inclu
 function tpen(id,i){i=i==null?times.length-1:i;const L=times[i];if(!L)return;if(id=="p2"){if(L.pen==2){L.t-=2000;delete L.pen}else{L.t+=2000;L.pen=2}}else{if(L.pen=="DNF")delete L.pen;else{if(L.pen==2)L.t-=2000;L.pen="DNF"}}L.m=Date.now();saveT();stats();if(i==times.length-1&&T.s!="run")tmSet(ftime(L),dlt())}
 
 /* ---------- TRAINER ---------- */
-let TR={set:"All",cur:null,ok:0,n:0,rev:false,t0:0,run:false};
+/* Four modes share one engine:
+   Recognize = see a picture, pick its name      Practice = setup moves, timer, self-check
+   Quiz      = short scored test                 My progress = what you know, what to work on
+   Everything is kept in TRD (localStorage key cl_tr). TRD is part of the backup bundle (bkData), so it is
+   also saved to / restored from the signed-in Supabase account together with the rest of your data.
+   TRD = { v:1,
+     c:{ caseKey:{ n,ok,s,b,l,bt,tt,tn, r:[n,ok], q:[n,ok], p:[n,ok] } },  per-case stats
+     h:[[time,caseKey,mode,good,ms],...],                                  last 300 attempts
+     q:[[time,set,total,correct],...],                                      finished quizzes
+     p:{set,mode,queue,qn}, pu:time }                                       saved preferences
+   n tries, ok correct, s streak, b level 0-5, l last time, bt best ms, tt/tn total ms / count of timed solves.
+   Mode letters: r Recognize, p Practice, q Quiz.  Level: correct +1, miss -2.  Mastered = level 4 or more. */
+let TR={set:"All",mode:"pr",q:"smart",qn:10,pick:null,cur:null,why:"",rev:false,t0:0,run:false,last:null,ok:0,n:0,fb:"",opts:[],ans:null,res:null,seen:[],wk:[],qz:null};
 const SETS=["All","F2L","OLL","PLL","CMLL","OCLL","COLL","EPLL","LSE","EO","ZBLL"];
-function vTrainer(){return `<div class="card"><div class="row"><label for="ts"><b>Train:</b></label><select id="ts">${SETS.map(s=>`<option ${s==TR.set?"selected":""}>${s}</option>`).join("")}</select><span class="mu" id="tst"></span></div></div><div class="card" id="tc"></div><p class="mu">Apply the setup moves to a solved cube, then solve the case. Missed cases come up more often.</p>`}
-function nextCase(){const pool=ALL.filter(c=>TR.set=="All"?c.m!="ZBLL":c.s==TR.set||(TR.set=="ZBLL"&&c.m=="ZBLL"));let tot=pool.reduce((x,c)=>x+(W[c.k]||1),0),r=Math.random()*tot,c=pool[0];for(const p of pool){r-=W[p.k]||1;if(r<=0){c=p;break}}
-if(pool.length>1&&TR.cur&&c.k==TR.cur.k)return nextCase();TR.cur=c;TR.rev=false;TR.run=false;trShow()}
-function trShow(){const c=TR.cur,e=$("#tc");if(!e)return;$("#tst").textContent=TR.n?`${TR.ok}/${TR.n} correct`:"";
-e.innerHTML=`<div class="mu">${c.m} · ${c.s}</div><div class="cs">${dia(c.a,c.s)}<div><h2>${c.n}</h2><p class="mu">Setup moves:</p>${chip(inv(c.a))}</div></div><div class="row"><button class="btn" data-a="sw">${TR.run?"■ Stop":"⏱ Start timer"}</button><span id="trt" style="font:700 1.2rem ui-monospace,monospace"></span></div>
-${TR.rev?`<p class="mu" style="margin-top:12px">Solution — ${c.t}</p>${chip(c.a)}${(UX[c.id]||[]).length?`<p class="mu">Your alternatives:</p>${UX[c.id].map(x=>chip(x)).join("")}`:""}<div class="row"><button class="btn" data-a="wt">▶ Watch</button><button class="btn pr" data-a="ok">✓ Got it</button><button class="btn" data-a="no">✗ Missed</button></div>`:`<div class="row" style="margin-top:12px"><button class="btn pr" data-a="rv">Reveal algorithm</button></div>`}`}
-function trTick(){if(TR.run){const e=$("#trt");if(e)e.textContent=fmt(performance.now()-TR.t0);requestAnimationFrame(trTick)}}
-function trAns(good){actDay();const k=TR.cur.k;TR.n++;if(good){TR.ok++;W[k]=Math.max(1,(W[k]||1)-1)}else W[k]=(W[k]||1)+2;ls.set("cl_w",W);nextCase()}
+const TRI=[0,12e4,9e5,288e5,1728e5,6048e5];   /* how long a case at level 0..5 waits before it is "due" again: now, 2 min, 15 min, 8 h, 2 days, 7 days */
+const TRL={new:"New",weak:"Weak",learning:"Learning",mastered:"Mastered"};
+const TRH={rec:"A case appears with no label. Pick its name. If you are wrong you see the right answer straight away.",
+pr:"1) Do the setup moves on a solved cube. 2) Start the timer and solve it from memory, then stop. 3) Reveal the algorithm to check, and mark yourself.",
+quiz:"A short test. Pick the right algorithm for a case, or the right case for an algorithm. Your score is saved when you finish.",
+prog:"How well you know each set, and which cases need more work."};
+const TRQ={smart:"Smart queue: cases you miss come back sooner, ones you know come back later, and new cases are added a few at a time.",
+random:"Random: every case is equally likely.",weak:"Only the cases you missed recently.",pick:"The same case again and again, so you can drill one algorithm."};
+let TRD=trNorm(ls.get("cl_tr",null));
+trPrefsIn();
+function trNorm(d){const o={v:1,c:{},h:[],q:[],p:{set:"All",mode:"pr",queue:"smart",qn:10},pu:0};
+if(!d||typeof d!="object")return o;try{d=JSON.parse(JSON.stringify(d))}catch(e){return o}
+if(d.c&&typeof d.c=="object")for(const k in d.c){const r=d.c[k];if(r&&typeof r=="object"&&r.n>0)o.c[k]=r}
+if(Array.isArray(d.h))o.h=d.h.filter(Array.isArray).slice(-300);
+if(Array.isArray(d.q))o.q=d.q.filter(Array.isArray).slice(-60);
+if(d.p&&typeof d.p=="object")Object.assign(o.p,d.p);o.pu=+d.pu||0;return o}
+/* merge two Trainer records (another device, a backup, the cloud). Counters take the larger value, so merging the same
+   data twice never double counts; level and streak come from whichever side practiced that case last. */
+function trMerge(a,b){const o=trNorm(a);b=trNorm(b);const mx=(x,y)=>Math.max(+x||0,+y||0),pr=(x,y)=>[mx(x&&x[0],y&&y[0]),mx(x&&x[1],y&&y[1])];
+for(const k in b.c){const x=o.c[k],y=b.c[k];if(!x){o.c[k]=y;continue}
+const nw=(+y.l||0)>(+x.l||0)?y:x,m={n:mx(x.n,y.n),s:+nw.s||0,b:+nw.b||0,l:mx(x.l,y.l)};m.ok=Math.min(mx(x.ok,y.ok),m.n);
+for(const f of["r","q","p"])if(x[f]||y[f])m[f]=pr(x[f],y[f]);
+const bt=[x.bt,y.bt].filter(v=>v>0);if(bt.length)m.bt=Math.min(...bt);
+const ts=(+y.tn||0)>(+x.tn||0)?y:x;if(ts.tn){m.tn=ts.tn;m.tt=ts.tt}o.c[k]=m}
+const seen=new Set(),h=[];for(const r of[...o.h,...b.h]){const k=r[0]+"|"+r[1]+"|"+r[2];if(!seen.has(k)){seen.add(k);h.push(r)}}
+o.h=h.sort((p,q)=>p[0]-q[0]).slice(-300);
+const sq=new Set(),q=[];for(const r of[...o.q,...b.q]){const k=r[0]+"|"+r[1];if(!sq.has(k)){sq.add(k);q.push(r)}}
+o.q=q.sort((p,q)=>p[0]-q[0]).slice(-60);
+if((b.pu||0)>(o.pu||0)){o.p=b.p;o.pu=b.pu}return o}
+function trSave(){ls.set("cl_tr",TRD)}
+function trPrefsSave(){TRD.p={set:TR.set,mode:TR.mode,queue:TR.q=="pick"?"smart":TR.q,qn:TR.qn};TRD.pu=Date.now();trSave()}
+function trPrefsIn(){const p=TRD.p||{};TR.set=SETS.includes(p.set)?p.set:"All";TR.mode=["rec","pr","quiz","prog"].includes(p.mode)?p.mode:"pr";
+TR.q=["smart","random","weak"].includes(p.queue)?p.queue:"smart";TR.qn=[5,10,20].includes(+p.qn)?+p.qn:10}
+/* --- how well is a case known? --- */
+const trState=e=>!e||!e.n?"new":(e.b||0)>=4?"mastered":(!e.s||(e.n>=4&&e.ok/e.n<.5))?"weak":"learning";
+const trSt=c=>{const e=TRD.c[c.k];return e&&e.n?trState(e):(W[c.k]||1)>1?"weak":"new"};   /* W = the older "missed cases" weights, still honored for cases with no new stats */
+const trLv=e=>{const b=e?e.b||0:0;return `<span class="trlv" title="Level ${b} of 5" aria-label="Level ${b} of 5">${"●".repeat(b)+"○".repeat(5-b)}</span>`};
+const trIn=c=>TR.set=="All"?c.m!="ZBLL":c.s==TR.set||(TR.set=="ZBLL"&&c.m=="ZBLL");
+const trSh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function trAgo(t){const m=Math.round((Date.now()-t)/6e4);if(m<1)return"just now";if(m<60)return m+" min ago";const h=Math.round(m/60);if(h<24)return h+" h ago";const d=Math.round(h/24);return d==1?"yesterday":d+" days ago"}
+/* --- record one answer / attempt. mode: r recognize, p practice, q quiz. ms: solve time (practice only) --- */
+function trRecord(c,mode,good,ms){actDay();const now=Date.now(),e=TRD.c[c.k]||(TRD.c[c.k]={n:0,ok:0,s:0,b:0,l:0}),before=trSt(c);
+e.n++;if(good){e.ok++;e.s=(e.s||0)+1;e.b=Math.min(5,(e.b||0)+1)}else{e.s=0;e.b=Math.max(0,(e.b||0)-2)}e.l=now;
+const m=e[mode]||(e[mode]=[0,0]);m[0]++;if(good)m[1]++;
+if(good&&mode=="p"&&ms>0){e.tt=(e.tt||0)+ms;e.tn=(e.tn||0)+1;if(!e.bt||ms<e.bt)e.bt=Math.round(ms)}
+TRD.h.push([now,c.k,mode,good?1:0,ms>0?Math.round(ms):0]);if(TRD.h.length>300)TRD.h=TRD.h.slice(-300);
+W[c.k]=good?Math.max(1,(W[c.k]||1)-1):(W[c.k]||1)+2;ls.set("cl_w",W);   /* keep the older weights in step */
+trSave();return{before,after:trState(e),box:e.b}}
+const trNote=(c,r)=>`${c.n}: <b>${TRL[r.after]}</b>${r.before!=r.after?" (was "+TRL[r.before]+")":""} · level ${r.box} of 5`;
+/* --- Smart Practice Queue: weak cases first, due reviews next, new cases only a few at a time --- */
+function trW(c,now,act){const s=trSt(c),e=TRD.c[c.k];
+if(s=="new")return[act>=6?.12:1.5,"New case"];
+if(!e||!e.n)return[4,"Weak spot"];
+const gap=TRI[e.b||0],age=now-(e.l||0),due=age>=gap;let w=due?2+(gap?Math.min(3,age/gap):1):.2;
+if(s=="weak")w*=2.5;if(s=="mastered")w=due?Math.min(w,1.5):.05;
+return[w,s=="weak"?"Weak spot":due?"Due for review":"Review"]}
+function trPickN(pool,n,avoid){const now=Date.now(),smart=TR.mode=="quiz"||TR.q!="random",out=[];let p=pool.slice();
+const act=pool.filter(c=>{const s=trSt(c);return s=="weak"||s=="learning"}).length;
+while(out.length<n&&p.length){let cand=p.length>3?p.filter(c=>!(avoid||[]).includes(c.k)):p;if(!cand.length)cand=p;
+const ws=cand.map(c=>smart?trW(c,now,act):[1,"Random"]);let r=Math.random()*ws.reduce((x,w)=>x+w[0],0),i=0;
+for(;i<cand.length-1;i++){r-=ws[i][0];if(r<=0)break}
+out.push({c:cand[i],why:ws[i][1]});p=p.filter(x=>x!==cand[i])}return out}
+function trPool(pics,weak){let p=ALL.filter(c=>trIn(c)&&(!pics||GM[c.s]));if(weak)p=p.filter(c=>trSt(c)=="weak");return p}
+/* wrong answers: two look-alikes from the same set, then others. Never a case that draws the same picture as the right one. */
+function trDis(c,n){const pc=dia(c.a,c.s),pool=trSh(ALL.filter(x=>x.s==c.s&&x.k!=c.k&&x.a!=c.a&&GM[x.s])),like=x=>c.g?x.g==c.g:x.t==c.t,out=[],pics=new Set([pc]);
+for(const x of[...pool.filter(like).slice(0,2),...pool]){if(out.length>=n)break;if(out.includes(x))continue;const d=dia(x.a,x.s);if(pics.has(d))continue;pics.add(d);out.push(x)}return out}
+const trSeen=()=>{if(TR.cur)TR.seen=[...TR.seen,TR.cur.k].slice(-3)};
+/* --- screen frame --- */
+function vTrainer(){return `<div id="tr"><div class="card"><div class="pills" id="trm" style="margin-bottom:6px"></div><p class="mu" id="trh" style="margin:0"></p></div><div class="card" id="trk"></div><div class="card" id="tc"></div></div>`}
+function trInit(){trCss();trPills();trCtl();if(TR.mode=="rec"&&!TR.cur)recNext();else if(TR.mode=="pr"&&!TR.cur)nextCase();else trView()}
+function trPills(){const m=$("#trm");if(m)m.innerHTML=[["rec","👁 Recognize"],["pr","⏱ Practice"],["quiz","📝 Quiz"],["prog","📊 My progress"]].map(([k,l])=>`<button class="pill ${k==TR.mode?"on":""}" data-a="tr:mode:${k}" aria-pressed="${k==TR.mode}">${l}</button>`).join("");
+const h=$("#trh");if(h)h.textContent=TRH[TR.mode]}
+function trCtl(){const e=$("#trk");if(!e)return;if(TR.mode=="prog"){e.hidden=true;return}e.hidden=false;
+const set=`<label for="ts"><b>Set</b></label><select id="ts" data-tr="set">${SETS.map(s=>`<option ${s==TR.set?"selected":""}>${s}</option>`).join("")}</select>`;let more,help;
+if(TR.mode=="quiz"){more=`<label for="tqn"><b>Questions</b></label><select id="tqn" data-tr="qn">${[5,10,20].map(n=>`<option ${n==TR.qn?"selected":""}>${n}</option>`).join("")}</select>`;help="Questions favor your weak and due cases."}
+else{const ops=[["smart","Smart queue"],["random","Random"],["weak","Weak cases only"]];if(TR.mode=="pr")ops.push(["pick","One case…"]);
+more=`<label for="tq"><b>Order</b></label><select id="tq" data-tr="queue">${ops.map(([v,l])=>`<option value="${v}" ${v==TR.q?"selected":""}>${l}</option>`).join("")}</select>`;
+if(TR.mode=="pr"&&TR.q=="pick")more+=`<select id="tcp" data-tr="pick" aria-label="Case to practice">${ALL.filter(trIn).map(c=>`<option value="${c.k}" ${c.k==TR.pick?"selected":""}>${TR.set=="All"?c.s+": ":""}${c.n}</option>`).join("")}</select>`;help=TRQ[TR.q]}
+e.innerHTML=`<div class="row">${set}${more}<span class="mu" id="tst"></span></div><p class="mu" style="margin:8px 0 0">${help}</p>`}
+function trCount(){if(TR.mode=="quiz"){const q=TR.qz;return q&&q.i<q.items.length?`${q.ok}/${q.log.length} correct`:""}return TR.n?`${TR.ok}/${TR.n} correct`:""}
+function trView(){const e=$("#tc");if(!e)return;e.innerHTML=({rec:recHtml,pr:prHtml,quiz:qzHtml,prog:progHtml})[TR.mode]();const s=$("#tst");if(s)s.textContent=trCount();
+const f=$("#trf");if(f&&f.firstChild){const b=f.querySelector(".pr");if(b)try{b.focus({preventScroll:true})}catch(x){}try{f.scrollIntoView({block:"nearest"})}catch(x){}}}
+const trShow=trView;
+function trEmpty(){if(TR.mode!="pr"&&!trPool(true,false).length)return `<p>This set has no pictures, so it cannot be used here. Pick another set, or use <b>Practice</b>.</p>`;
+if(TR.q=="weak")return `<p><b>No weak cases right now. Nice!</b></p><p class="mu">Switch <b>Order</b> to Smart queue to keep practicing.</p>`;return `<p>No cases in this set.</p>`}
+function trMode(m){TR.run=false;TR.mode=m;TR.fb="";TR.ok=0;TR.n=0;TR.cur=null;TR.ans=null;if(m!="pr"&&TR.q=="pick")TR.q="smart";trPrefsSave();trPills();trCtl();
+if(m=="rec")recNext();else if(m=="pr")nextCase();else trView()}
+function trAfter(){TR.cur=null;TR.ans=null;TR.seen=[];if(TR.mode=="rec")recNext();else if(TR.mode=="pr")nextCase();else trView()}
+function trChange(el){const v=el.value,w=el.dataset.tr;
+if(w=="set"){TR.set=v;TR.fb="";TR.ok=0;TR.n=0;TR.qz=null;TR.pick=null;trPrefsSave();trCtl();return trAfter()}
+if(w=="queue"){TR.q=v;TR.fb="";if(v=="pick")TR.pick=TR.cur&&trIn(TR.cur)?TR.cur.k:(ALL.find(trIn)||{}).k||null;trPrefsSave();trCtl();return v=="pick"?nextCase():trAfter()}
+if(w=="pick"){TR.pick=v;return nextCase()}
+if(w=="qn"){TR.qn=+v;TR.qz=null;trPrefsSave();trView()}}
+function trAct(t){const p=t.dataset.a.split(":"),k=p[1];
+if(k=="mode")return trMode(p[2]);if(k=="r")return recAns(+p[2]);if(k=="next")return recNext();
+if(k=="q")return qzAns(+p[2]);if(k=="qn")return qzNext();if(k=="qs")return qzStart();
+if(k=="wk"){const c=ALL.find(x=>x.k==TR.wk[+p[2]]);if(!c)return;TR.set=c.m=="ZBLL"?"ZBLL":c.s;TR.q="pick";TR.pick=c.k;return trMode("pr")}
+if(k=="weak"){TR.q="weak";TR.set=p[2]=="z"?"ZBLL":p[2]&&p[2]!="a"?p[2]:"All";return trMode("pr")}}
+/* --- Recognize --- */
+function recNext(){const pool=trPool(true,TR.q=="weak");TR.ans=null;TR.res=null;
+if(!pool.length){TR.cur=null;return trView()}
+const x=trPickN(pool,1,TR.seen)[0];TR.cur=x.c;TR.why=x.why;trSeen();TR.opts=trSh([x.c,...trDis(x.c,3)]);trView()}
+function recAns(i){if(TR.ans!=null||!TR.cur||!TR.opts[i])return;const c=TR.cur,good=TR.opts[i].k==c.k;TR.ans=i;TR.n++;if(good)TR.ok++;TR.res=trRecord(c,"r",good,0);trView()}
+function recHtml(){const c=TR.cur;if(!c)return trEmpty();const d=TR.ans!=null,n=TR.opts.length;
+return `<div class="row" style="justify-content:space-between"><span class="mu">${c.m} · ${c.s}</span><span class="trwhy">${TR.why}</span></div>
+<h3 style="text-align:center">What case is this?</h3><div class="trd">${dia(c.a,c.s)}</div>
+<div class="tro${n==4?" cols4":""}" role="group" aria-label="Answer choices">${TR.opts.map((o,i)=>`<button class="btn${d?(o.k==c.k?" trg":i==TR.ans?" trx":""):""}" data-a="tr:r:${i}">${o.n}</button>`).join("")}</div>
+<div id="trf" role="status" aria-live="polite">${d?trFb(c,TR.opts[TR.ans].k==c.k,TR.opts[TR.ans],TR.res,"tr:next","Next →"):""}</div>`}
+function trFb(c,good,picked,res,act,label){return `<p class="${good?"ok":"bad"}"><b>${good?"✓ Correct":"✗ Not quite"}</b> — ${good?"it is":"it was"} <b>${c.n}</b>${good?"":", not "+picked.n}.</p><p class="mu" style="margin:0 0 4px">${c.t}</p>${chip(c.a)}<p class="mu">${trNote(c,res)}</p><div class="row"><button class="btn" data-a="wt">▶ Watch</button><button class="btn pr" data-a="${act}">${label}</button></div>`}
+/* --- Practice (the original drill, now with history, times and a smarter queue) --- */
+function nextCase(){TR.rev=false;TR.run=false;TR.last=null;TR.ans=null;
+if(TR.q=="pick"){const c=ALL.find(x=>x.k==TR.pick&&trIn(x))||ALL.find(trIn)||null;TR.cur=c;TR.pick=c?c.k:null;TR.why="Your pick"}
+else{const pool=trPool(false,TR.q=="weak");if(!pool.length)TR.cur=null;else{const x=trPickN(pool,1,TR.seen)[0];TR.cur=x.c;TR.why=x.why}}
+trSeen();trView()}
+function trLine(c){const e=TRD.c[c.k];if(!e||!e.n)return"Not tried yet.";return `${trLv(e)} ${TRL[trState(e)]} · ${e.ok} of ${e.n} correct${e.tn?` · best ${fmt(e.bt)} · average ${fmt(e.tt/e.tn)}`:""}`}
+function prHtml(){const c=TR.cur;if(!c)return trEmpty();
+return `${TR.fb?`<div class="trfb" role="status">${TR.fb}</div>`:""}<div class="row" style="justify-content:space-between"><span class="mu">${c.m} · ${c.s}</span><span class="trwhy">${TR.why}</span></div>
+<div class="cs">${dia(c.a,c.s)}<div><h2>${c.n}</h2><p class="mu">${c.t}</p><p class="mu" style="margin-bottom:2px">Setup moves (do these on a solved cube):</p>${chip(inv(c.a))}</div></div>
+<div class="row"><button class="btn" data-a="sw">${TR.run?"■ Stop":"⏱ Start timer"}</button><span id="trt" style="font:700 1.2rem ui-monospace,monospace">${TR.last!=null?fmt(TR.last):""}</span></div>
+${TR.rev?`<p class="mu" style="margin:12px 0 0">Algorithm:</p>${chip(c.a)}${(UX[c.id]||[]).length?`<p class="mu">Your alternatives:</p>${UX[c.id].map(x=>chip(x)).join("")}`:""}<div class="row"><button class="btn" data-a="wt">▶ Watch</button><button class="btn pr" data-a="ok">✓ Got it</button><button class="btn" data-a="no">✗ Missed</button></div>`:`<div class="row" style="margin-top:12px"><button class="btn pr" data-a="rv">Reveal algorithm</button></div>`}
+<p class="mu" style="margin:10px 0 0">${trLine(c)}</p>`}
+function trTick(){if(TR.run){const e=$("#trt");if(!e){TR.run=false;return}e.textContent=fmt(performance.now()-TR.t0);requestAnimationFrame(trTick)}}
+function trAns(good){const c=TR.cur,ms=TR.last||0;TR.n++;if(good)TR.ok++;const r=trRecord(c,"p",good,ms);
+TR.fb=good?`<span class="ok">✓</span> <b>${c.n}</b> · ${TRL[r.after]}${r.before!=r.after?" (was "+TRL[r.before]+")":""}${ms?" · "+fmt(ms)+" s":""}`:`<span class="bad">✗</span> <b>${c.n}</b> will come back soon.`;nextCase()}
+/* --- Quiz --- */
+function qzStart(){const pool=trPool(true,false);if(pool.length<2)return trView();
+TR.qz={items:trPickN(pool,Math.min(TR.qn,pool.length)).map(x=>({c:x.c,t:Math.random()<.5?"a":"b"})),i:0,ans:null,ok:0,log:[],set:TR.set,saved:false,cur:null,res:null};qzQ();trView()}
+function qzQ(){const q=TR.qz,it=q.items[q.i];q.cur={opts:trSh([it.c,...trDis(it.c,3)])}}
+function qzAns(i){const q=TR.qz;if(!q||q.ans!=null||q.i>=q.items.length)return;const it=q.items[q.i],o=q.cur.opts[i];if(!o)return;const good=o.k==it.c.k;
+q.ans=i;if(good)q.ok++;q.res=trRecord(it.c,"q",good,0);q.log.push({c:it.c,good});TR.cur=it.c;
+if(q.i==q.items.length-1&&!q.saved){q.saved=true;TRD.q.push([Date.now(),q.set,q.items.length,q.ok]);if(TRD.q.length>60)TRD.q=TRD.q.slice(-60);trSave()}trView()}
+function qzNext(){const q=TR.qz;if(!q||q.ans==null)return;q.i++;q.ans=null;q.res=null;if(q.i<q.items.length)qzQ();trView()}
+function qzHtml(){const q=TR.qz;
+if(!q){if(!trPool(true,false).length)return trEmpty();const n=Math.min(TR.qn,trPool(true,false).length),last=TRD.q.filter(x=>x[1]==TR.set).slice(-1)[0];
+return `<h3>Case quiz · ${TR.set}</h3><p>${n} questions. Each one shows a case and asks for its algorithm, or shows an algorithm and asks which case it solves.</p>${last?`<p class="mu">Last time on ${TR.set}: ${last[3]} of ${last[2]} (${trAgo(last[0])})</p>`:""}<button class="btn pr" data-a="tr:qs">Start quiz</button>`}
+if(q.i>=q.items.length)return qzSummary();
+const it=q.items[q.i],c=it.c,o=q.cur.opts,d=q.ans!=null,n=o.length,A=it.t=="a";if(d)TR.cur=c;
+return `<div class="row" style="justify-content:space-between"><b>Question ${q.i+1} of ${q.items.length}</b><span class="mu">${c.m} · ${c.s}</span></div>
+<div class="bar trb" role="img" aria-label="Quiz progress"><i style="width:${q.i/q.items.length*100}%;background:var(--ac)"></i></div>
+<h3 style="text-align:center">${A?"Which algorithm solves this case?":"Which case does this algorithm solve?"}</h3>
+${A?`<div class="trd">${dia(c.a,c.s)}</div>`:`<code class="alg" style="cursor:default">${c.a}</code>`}
+<div class="tro${A?" one":n==4?" cols4":""}" role="group" aria-label="Answer choices">${o.map((x,i)=>{const k=d?(x.k==c.k?" trg":i==q.ans?" trx":""):"";return A?`<button class="btn${k}" data-a="tr:q:${i}"><span class="trm">${x.a}</span></button>`:`<button class="btn dgb${k}" data-a="tr:q:${i}" aria-label="Option ${i+1}">${dia(x.a,x.s)}</button>`}).join("")}</div>
+<div id="trf" role="status" aria-live="polite">${d?trFb(c,o[q.ans].k==c.k,o[q.ans],q.res,"tr:qn",q.i==q.items.length-1?"See results":"Next →"):""}</div>`}
+function qzSummary(){const q=TR.qz,n=q.items.length,pc=Math.round(q.ok/n*100),miss=q.log.filter(x=>!x.good),prev=TRD.q.filter(x=>x[1]==q.set).slice(-2,-1)[0];
+return `<h2>${q.ok} of ${n} correct</h2><p class="mu">${pc}% on ${q.set}${prev?` · last time ${prev[3]} of ${prev[2]}`:""}. Saved to your progress.</p>
+${miss.length?`<h3 style="margin-top:12px">Review these</h3>${miss.map(x=>`<div class="cs case">${dia(x.c.a,x.c.s)}<div><b>${x.c.n}</b> <span class="mu">${x.c.n.includes(x.c.s)?"":x.c.s}</span><p class="mu" style="margin:0">${x.c.t}</p>${chip(x.c.a)}</div></div>`).join("")}`:`<p><b>Perfect score!</b></p>`}
+<div class="row" style="margin-top:12px"><button class="btn pr" data-a="tr:qs">New quiz</button>${miss.length?`<button class="btn" data-a="tr:weak:${q.set=="ZBLL"?"z":q.set=="All"?"a":q.set}">Practice weak cases</button>`:""}</div>`}
+/* --- My progress --- */
+function progHtml(){const tried=Object.keys(TRD.c).length;
+if(!tried)return `<h3>Nothing here yet</h3><p>Do a few exercises and your progress will show up here: which cases you know, which are weak, and how you are improving.</p><div class="row"><button class="btn pr" data-a="tr:mode:rec">Start with Recognize</button><button class="btn" data-a="tr:mode:pr">Go to Practice</button></div>`;
+const sets=SETS.filter(s=>s!="All").map(s=>{const cs=ALL.filter(c=>s=="ZBLL"?c.m=="ZBLL":c.s==s&&c.m!="ZBLL"),k={mastered:0,learning:0,weak:0,new:0};cs.forEach(c=>k[trSt(c)]++);return{s,t:cs.length,k}}).filter(x=>x.k.new<x.t);
+const weakAll=ALL.filter(c=>{const e=TRD.c[c.k];return e&&e.n&&trState(e)=="weak"}).sort((a,b)=>{const x=TRD.c[a.k],y=TRD.c[b.k];return(y.ok/y.n<x.ok/x.n?1:y.ok/y.n>x.ok/x.n?-1:0)||(y.l-x.l)}),wk=weakAll.slice(0,5);TR.wk=wk.map(c=>c.k);
+const sk=m=>{let n=0,ok=0;for(const k in TRD.c){const a=TRD.c[k][m];if(a){n+=a[0];ok+=a[1]}}return n?`<b>${Math.round(ok/n*100)}%</b><span class="mu">${n} answers</span>`:`<b>–</b><span class="mu">not tried</span>`};
+const h=TRD.h,l50=h.slice(-50),p50=h.slice(-100,-50),acc=a=>a.length?Math.round(a.reduce((x,r)=>x+r[3],0)/a.length*100):0;
+const trend=l50.length>=10?`Last ${l50.length} answers: <b>${acc(l50)}%</b> correct${p50.length>=10?` (the ${p50.length} before: ${acc(p50)}%)`:""}.`:"";
+const by={};ALL.forEach(c=>by[c.k]=c);
+return `<div class="grid"><div class="st"><span class="mu">Recognize</span>${sk("r")}</div><div class="st"><span class="mu">Practice</span>${sk("p")}</div><div class="st"><span class="mu">Quiz</span>${sk("q")}</div></div>
+${trend?`<p>${trend}</p>`:""}
+<h3>By set</h3>${sets.map(x=>{const pc=v=>x.t?v/x.t*100:0;return `<div class="trs"><div class="row" style="justify-content:space-between"><b>${x.s}</b><span class="mu">${x.k.mastered} of ${x.t} mastered${x.k.weak?` · <span class="bad">${x.k.weak} weak</span>`:""}</span></div><div class="bar trb" role="img" aria-label="${x.s}: ${x.k.mastered} mastered, ${x.k.learning} learning, ${x.k.weak} weak, ${x.k.new} new"><i style="width:${pc(x.k.mastered)}%;background:var(--ok)"></i><i style="width:${pc(x.k.learning)}%;background:var(--ac)"></i><i style="width:${pc(x.k.weak)}%;background:var(--bad)"></i></div></div>`}).join("")}
+<p class="mu"><span class="dot" style="background:var(--ok)"></span>Mastered <span class="dot" style="background:var(--ac);margin-left:10px"></span>Learning <span class="dot" style="background:var(--bad);margin-left:10px"></span>Weak <span class="dot" style="background:var(--bd);margin-left:10px"></span>New</p>
+<h3 style="margin-top:14px">Needs work</h3>${wk.length?wk.map((c,i)=>{const e=TRD.c[c.k];return `<div class="cs case">${dia(c.a,c.s)}<div><b>${c.n}</b> <span class="mu">${c.n.includes(c.s)?"":c.s}</span><p class="mu" style="margin:0">${e.n-e.ok} missed of ${e.n}${e.tn?` · average ${fmt(e.tt/e.tn)}`:""}</p><button class="btn" style="margin-top:6px;padding:6px 14px" data-a="tr:wk:${i}">Practice this</button></div></div>`}).join("")+`<div class="row" style="margin-top:10px"><button class="btn pr" data-a="tr:weak:${weakAll.every(c=>c.m=="ZBLL")?"z":"a"}">Practice weak cases (${weakAll.length})</button></div>`:`<p class="mu">No weak cases right now. Keep going!</p>`}
+${TRD.q.length?`<h3 style="margin-top:14px">Recent quizzes</h3>${TRD.q.slice(-5).reverse().map(x=>`<div class="row" style="justify-content:space-between"><span>${x[1]}: <b>${x[3]} of ${x[2]}</b></span><span class="mu">${trAgo(x[0])}</span></div>`).join("")}`:""}
+${h.length?`<h3 style="margin-top:14px">Recent answers</h3>${h.slice(-8).reverse().map(r=>{const c=by[r[1]];return c?`<div class="row" style="justify-content:space-between"><span>${r[3]?`<span class="ok">✓</span>`:`<span class="bad">✗</span>`} ${c.n} <span class="mu">${c.n.includes(c.s)?"":c.s}</span></span><span class="mu">${{r:"Recognize",p:"Practice",q:"Quiz"}[r[2]]||""} · ${trAgo(r[0])}</span></div>`:""}).join("")}`:""}
+<details style="margin-top:12px"><summary>How levels work</summary><p class="mu">Every case has a level from 0 to 5. A correct answer adds 1; a miss takes away 2. <b>Mastered</b> means level 4 or more. <b>Weak</b> means you missed it last time, or you get fewer than half right. The Smart queue uses this to bring weak cases back sooner and mastered ones back later.</p></details>`}
+/* Trainer styles live here so this section is self-contained. They only use the site's colour variables, so every theme works. */
+const TRCSS=`#trk[hidden]{display:none}#trk .row{gap:8px 10px}
+.trd{display:flex;justify-content:center;margin:6px 0 12px}.trd .dg{width:min(50vw,170px);height:auto;aspect-ratio:1}
+.tro{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}.tro.one{grid-template-columns:minmax(0,1fr)}
+@media(min-width:560px){.tro.cols4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tro .btn{min-height:48px;text-align:center;white-space:normal;overflow-wrap:anywhere;border-radius:12px}
+.tro .btn.trg{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--cd))}.tro .btn.trx{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--cd))}
+.tro .btn.dgb{display:flex;justify-content:center;padding:6px}.tro .btn .dg{width:100%;max-width:150px;height:auto;aspect-ratio:1;box-shadow:none}
+.trm{font:600 .9rem/1.4 ui-monospace,Menlo,Consolas,monospace;text-align:left;display:block}
+.trwhy{font-size:.75rem;padding:2px 10px;border:1px solid var(--bd);border-radius:999px;color:var(--mu);white-space:nowrap}
+.trfb{border:1px solid var(--bd);border-radius:10px;padding:6px 10px;margin-bottom:10px;font-size:.92rem;background:var(--bg)}
+.trlv{letter-spacing:.12em;color:var(--ac);white-space:nowrap}.trb{background:var(--bd)}.trs{margin:10px 0}.trs .bar{margin:4px 0}#trf p{margin:.4em 0}
+#tc .case:first-of-type{border-top:0}`;
+function trCss(){if(document.getElementById("trcss"))return;const s=document.createElement("style");s.id="trcss";s.textContent=TRCSS;document.head.appendChild(s)}
 
 /* ---------- BLINDFOLD (Old Pochmann) ---------- */
 // T-perm swaps the UR and UL edges, Y-perm swaps the UBL and UFR corners, BP fixes parity.
@@ -404,16 +586,16 @@ const c=`<div class="card"><h2>📈 Progress</h2>${chart()}</div><div class="car
 return (isDesk()?"":mhead("Progress"))+c+(isDesk()?"":mnav())}
 /* ---- backup, restore and GitHub Gist sync ---- */
 const GH={tok:ls.get("cl_tok",""),gid:ls.get("cl_gid","")},FNB="cubelab-backup.json";
-const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_set:ST,cl_theme:THM,cl_tmr:TMR,cl_days:DAYS}});
+const bkData=()=>({app:"cubelab",v:1,at:new Date().toISOString(),data:{cl_t:times,cl_pin:PIN,cl_done:LD,cl_ua:UX,cl_uo:UO,cl_w:W,cl_tr:TRD,cl_set:ST,cl_theme:THM,cl_tmr:TMR,cl_days:DAYS}});
 const tkeys=a=>{const seen={};return a.map(x=>{const k=x.d?x.d+"|"+x.s:"|"+x.s+"|"+x.t;seen[k]=(seen[k]||0)+1;return k+"#"+seen[k]})};
 function mergeTimes(a,b){const m=new Map(),ka=tkeys(a),kb=tkeys(b);a.forEach((x,i)=>m.set(ka[i],x));let add=0;b.forEach((y,i)=>{const x=m.get(kb[i]);if(!x){m.set(kb[i],y);add++}else if((y.m||y.d||0)>(x.m||x.d||0))m.set(kb[i],y)});const all=[...m.values()];return{list:[...all.filter(x=>!x.d),...all.filter(x=>x.d).sort((p,q)=>p.d-q.d)],add}}
 function reapplyUO(){for(const m in M)for(const s in M[m].sets)M[m].sets[s].forEach(c=>{c.a=UO[c.id]||c.id});ALL.forEach(x=>{x.a=UO[x.id]||x.id})}
 function mergeIn(inc,mode,withSet){const D=(inc&&inc.data)||{};if(!inc||inc.app!="cubelab"||!D.cl_t)throw new Error("This is not a CubeLab backup");let add=0;
-if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});DAYS=[...(D.cl_days||[])];add=times.length}
+if(mode=="replace"){times=D.cl_t;PIN=D.cl_pin||[];LD=D.cl_done||[];W=D.cl_w||{};TRD=trNorm(D.cl_tr);Object.keys(UX).forEach(k=>delete UX[k]);Object.assign(UX,D.cl_ua||{});Object.keys(UO).forEach(k=>delete UO[k]);Object.assign(UO,D.cl_uo||{});DAYS=[...(D.cl_days||[])];add=times.length}
 else{const r=mergeTimes(times,D.cl_t);times=r.list;add=r.add;(D.cl_pin||[]).forEach(x=>{if(!PIN.includes(x))PIN.push(x)});(D.cl_done||[]).forEach(x=>{if(!LD.includes(x))LD.push(x)});
-for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k])}
+for(const k in D.cl_ua||{}){const L=UX[k]=UX[k]||[];D.cl_ua[k].forEach(x=>{if(!L.includes(x))L.push(x)})}Object.assign(UO,D.cl_uo||{});for(const k in D.cl_w||{})W[k]=Math.max(W[k]||1,D.cl_w[k]);TRD=trMerge(TRD,D.cl_tr)}
 if(withSet&&D.cl_set){if(mode=="replace")Object.keys(ST).forEach(k=>delete ST[k]);Object.assign(ST,D.cl_set);ssave()}if(withSet&&D.cl_theme){THM=D.cl_theme;TMR=D.cl_tmr||{};ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);applyTheme();applyTimer()}
-(D.cl_days||[]).forEach(x=>{if(!DAYS.includes(x))DAYS.push(x)});ls.set("cl_days",DAYS);saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);reapplyUO();return{add,total:times.length}}
+(D.cl_days||[]).forEach(x=>{if(!DAYS.includes(x))DAYS.push(x)});ls.set("cl_days",DAYS);saveT();ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);ls.set("cl_tr",TRD);trPrefsIn();reapplyUO();return{add,total:times.length}}
 function vSync(){return `<div class="card"><h2>💾 Backup & sync</h2><p>Your data is stored in this browser by default. Sign in from the <b>Account</b> page to automatically save your solves, scrambles, progress, and settings to your private Supabase account. You can still use the backup tools below.</p></div>
 <div class="card"><h3>1. Make a backup</h3><div class="row"><button class="btn pr" id="bkd">⬇ Download backup file</button><button class="btn" id="bkc">📋 Copy backup text</button></div><p class="mu" id="bkm">The file has all your data. Keep it somewhere safe (Drive, email to yourself, your GitHub repo).</p></div>
 <div class="card"><h3>2. Restore on this device</h3><p>Pick a backup file, or paste the backup text.</p><input type="file" id="bkf" accept=".json,application/json"><textarea id="bkt" rows="4" placeholder="…or paste the backup text here"></textarea>
@@ -533,7 +715,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){const box=document.
 window.addEventListener("resize",()=>{if(document.body.classList.contains("hu-tao")){huTaoIndex=-1;huTaoScene()}});/* ---------- SUPABASE ACCOUNT + CLOUD SYNC ---------- */
 let SB=null,cloudUser=null,cloudActiveUserId=null,cloudAuthMode="login";
 let cloudStatusText="Not connected yet.",cloudStatusError=false,cloudSyncing=false,cloudSaving=false,cloudTimer=null;
-const CLOUD_KEYS=new Set(["cl_t","cl_pin","cl_done","cl_ua","cl_uo","cl_w","cl_set","cl_theme","cl_tmr","cl_days"]);
+const CLOUD_KEYS=new Set(["cl_t","cl_pin","cl_done","cl_ua","cl_uo","cl_w","cl_tr","cl_set","cl_theme","cl_tmr","cl_days"]);
 const cloudConfigured=()=>!!(SB);
 const cloudStatus=(message,isError=false)=>{cloudStatusText=message;cloudStatusError=isError;const el=$("#cloud-status");if(el){el.textContent=message;el.className=isError?"bad":"mu"}};
 const cloudRender=()=>{if(tab=="account")render()};
@@ -563,11 +745,11 @@ function cloudClientInit(){
   }).catch(err=>{cloudStatus(err.message||"Could not restore your login session.",true);cloudRender()});
 }
 function resetLocalForCloudAccount(){
-  times=[];PIN=[];LD=[];W={};DAYS=[];
+  times=[];PIN=[];LD=[];W={};DAYS=[];TRD=trNorm(null);trPrefsIn();
   Object.keys(UX).forEach(k=>delete UX[k]);Object.keys(UO).forEach(k=>delete UO[k]);
   Object.keys(ST).forEach(k=>delete ST[k]);Object.assign(ST,{insp:15,focus:1,any:(typeof matchMedia!="undefined"&&matchMedia("(pointer:coarse)").matches)?1:0,split:0,sm:"tap",rd:0,pre:"CFOP",ph:["Cross","F2L","OLL","PLL"]});
   THM={};TMR={};
-  ls.set("cl_t",times);ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);ls.set("cl_set",ST);ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);ls.set("cl_days",DAYS);
+  ls.set("cl_t",times);ls.set("cl_pin",PIN);ls.set("cl_done",LD);ls.set("cl_ua",UX);ls.set("cl_uo",UO);ls.set("cl_w",W);ls.set("cl_tr",TRD);ls.set("cl_set",ST);ls.set("cl_theme",THM);ls.set("cl_tmr",TMR);ls.set("cl_days",DAYS);
   reapplyUO();applyTheme();applyTimer();
 
 }
@@ -716,13 +898,13 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-t],[data-m
 if(t.dataset.t)return go(t.dataset.t);
 if(t.dataset.m){curM=t.dataset.m;return render()}
 if(t.dataset.c){try{navigator.clipboard.writeText(t.dataset.c)}catch(x){}const o=t.textContent;t.textContent="Copied ✓";setTimeout(()=>t.textContent=o,700);return}
-if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){actDay();const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
-if(a=="sw"){if(TR.run){TR.run=false;const d=performance.now()-TR.t0;trShow();$("#trt").textContent=fmt(d)}else{TR.run=true;TR.t0=performance.now();trShow();trTick()}return}
+if(t.dataset.q)return qAct(t);if(t.dataset.b)return bAct(t);if(t.dataset.l)return lnAct(t);if(t.dataset.p)return prAct(t);if(t.dataset.d){actDay();const i=+t.dataset.d;LD.includes(i)?LD.splice(LD.indexOf(i),1):LD.push(i);ls.set("cl_done",LD);t.textContent=LD.includes(i)?"✓ Done":"Mark done";return}if(t.dataset.x)return scAct(t);if(t.dataset.e)return edAct(t);const a=t.dataset.a;if(a&&a.slice(0,3)=="tr:")return trAct(t);if(a=="wt")return watch(TR.cur.a,caseState(TR.cur.a),TR.cur.n);if(a=="rv"){TR.rev=true;return trShow()}if(a=="ok")return trAns(true);if(a=="no")return trAns(false);
+if(a=="sw"){if(TR.run){TR.run=false;TR.last=performance.now()-TR.t0;trShow()}else{TR.run=true;TR.last=null;TR.t0=performance.now();trShow();trTick()}return}
 if(t.id=="bset"||t.id=="bset2"){const q=$("#setpop");q.hidden=!q.hidden;return}if(t.id=="xs"){$("#setpop").hidden=true;return}if(t.id=="blp"){const l=$("#lp");l.style.display=l.style.display=="none"?"":"none";return}if(t.id=="xc")return tcancel();if(t.dataset.lv)return homeLevel(t.dataset.lv,t.dataset.first);if(t.dataset.hg)return homeGo(t.dataset.hg);if(t.dataset.gl){ST.goal=+t.dataset.gl;ssave();return render()}if(t.dataset.pr)return thPreset(t.dataset.pr);if(t.dataset.tmx)return tmClear(t.dataset.tmx);if(/^(thr|tmr|thc|tha)$/.test(t.id))return thAct(t.id);if(t.dataset.si)return solveDlg(+t.dataset.si);if(t.id=="mdel")return mdel(t);if(t.id=="mnote")return solveDlg(times.length-1);if(t.id=="mmenu"||t.id=="mmore"){const n=$("#nav");n.hidden=!n.hidden;return}if(t.id=="hmore"){HN+=50;return histFill()}if(/^(bkd|bkc|bki|gsy|gup|gdn|gsv|gfo)$/.test(t.id))return syncAct(t.id);if(t.id=="p2"||t.id=="pd")return tpen(t.id);if(t.id=="cb")return cx();if(t.id=="rp")return newScr(T.last||T.scr);if(t.id=="sv"){const i=PIN.indexOf(T.scr);i<0?PIN.unshift(T.scr):PIN.splice(i,1);ls.set("cl_pin",PIN);return scInfo()}if(t.id=="ns")return newScr();
 if(t.id=="dl"){times.pop();ls.set("cl_t",times);return stats()}
 if(t.id=="ca"){if(t.dataset.s){times=[];ls.set("cl_t",times);t.textContent="Clear all";delete t.dataset.s;return stats()}t.dataset.s=1;t.textContent="Sure? Tap again"}});
 document.addEventListener("input",e=>{if(e.target.id=="q")fill();if(e.target.id=="hq"){HQ=e.target.value;HN=50;histFill()}});
-document.addEventListener("change",e=>{if(e.target.id=="ts"){TR.set=e.target.value;nextCase()}});
+document.addEventListener("change",e=>{if(e.target.dataset&&e.target.dataset.tr)trChange(e.target)});
 document.addEventListener("keydown",e=>{if(e.code=="Escape"){const d=$("#sd");if(d&&!d.hidden){e.preventDefault();sdClose()}}});
 const inField=()=>{const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
 document.addEventListener("keydown",e=>{if(tab!="timer"||inField())return;if(e.code=="Escape"){const sdl=$("#sd");if(sdl&&!sdl.hidden){sdClose();return}const q=$("#setpop");if(q&&!q.hidden){q.hidden=true;return}return tcancel()}if(e.code=="Space"){e.preventDefault();if(!e.repeat)tdown()}else if((T.s=="run"||T.s=="rwait")&&!e.repeat){e.preventDefault();tdown()}});
