@@ -436,11 +436,12 @@ function setMain(id, v) {
 function alts(c, s) {
   const id = c.id,
     L = UX[id] || [],
+    B = c.builtInAlts || [],
     ed = (i, v) => ED && ED.id == id && ED.i == i ? `<div class="row"><input id="ei" value="${(ED.v ?? v).replace(/"/g, "&quot;")}" placeholder="R U R' U'"><button class="btn pr" data-e="sv">${ED.w ? "Save anyway" : "Save"}</button><button class="btn" data-e="cn">Cancel</button></div><div class="bad" style="font-size:.85rem">${ED.m || ""}</div>` : "",
     mb = (a, i, l) => `<button class="mb" data-e="${a}" data-id="${id}" data-i="${i}" data-s="${s}">${l}</button>`,
     ok = (x) => chk(id, x, s) ? `<span class="ok">✓ same case</span>` : `<span class="bad">✗ different case</span>`,
     here = (i) => ED && ED.id == id && ED.i == i;
-  return (here(-2) ? ed(-2, c.a) : `<div class="ar">${c.a != id ? `<span class="mu">Edited</span> ${ok(c.a)} ` : ""}${mb("wt", -2, "▶ Watch")}${mb("ed", -2, "✎ Edit")}${c.a != id ? mb("rs", -2, "Reset to original") : ""}</div>`) + L.map((x, i) => here(i) ? ed(i, x) : `<div class="ar">${chip(x)}${ok(x)} ${mb("wt", i, "▶")}${mb("ed", i, "✎")}${mb("dl", i, "🗑")}</div>`).join("") + (here(-1) ? ed(-1, "") : `<div class="ar">${mb("ad", -1, "＋ Add another way")}</div>`);
+  return (here(-2) ? ed(-2, c.a) : `<div class="ar">${c.a != id ? `<span class="mu">Edited</span> ${ok(c.a)} ` : ""}${mb("wt", -2, "▶ Watch")}${mb("ed", -2, "✎ Edit")}${c.a != id ? mb("rs", -2, "Reset to original") : ""}</div>`) + B.map((x) => `<div class="ar">${chip(x)}${ok(x)} <button class="mb" data-e="wb" data-id="${id}" data-alg="${x}" data-s="${s}">▶</button></div>`).join("") + L.map((x, i) => here(i) ? ed(i, x) : `<div class="ar">${chip(x)}${ok(x)} ${mb("wt", i, "▶")}${mb("ed", i, "✎")}${mb("dl", i, "🗑")}</div>`).join("") + (here(-1) ? ed(-1, "") : `<div class="ar">${mb("ad", -1, "＋ Add another way")}</div>`);
 }
 
 function edAct(t) {
@@ -449,6 +450,11 @@ function edAct(t) {
     const c = ALL.find((x) => x.id == id) || { a: id, n: "Algorithm" },
       al = i >= 0 ? UX[id][i] : c.a;
     watch(al, caseState(c.a), (c.n || "Algorithm") + (i >= 0 ? " (your way)" : ""));
+    return;
+  }
+  if (a == "wb") {
+    const c = ALL.find((x) => x.id == id) || { a: id, n: "Algorithm" };
+    watch(t.dataset.alg, caseState(c.a), (c.n || "Algorithm") + " (built-in alternative)");
     return;
   }
   if (a == "ed" || a == "ad") {
@@ -982,6 +988,10 @@ M.CFOP.sets.PLL = [
   ["Y", "F R U' R' U' R U R' F' R U R' U' R' F R F'"],
   ["Z", "M' U M2 U M2 U M' U2 M2"]
 ].map(([n, a]) => A(n + " perm", a));
+
+M.CFOP.sets.PLL.find((c) => c.n == "Ua perm").builtInAlts = [
+  "M2 U M U2 M' U M2"
+];
 
 const OC = [["H", 20], ["Pi", 21], ["U", 22], ["T", 23], ["L", 24], ["Anti-Sune", 25], ["Sune", 26]].map(
   ([n, i]) => A(n, OLLS[i], "Orients all four corners (edges already oriented)")
