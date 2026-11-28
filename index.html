@@ -1,15 +1,79 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CubeLab – Rubik’s Cube 3×3 Toolkit</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap">
-<link rel="stylesheet" href="style.css"></head><body>
-<header><div class="hb"><button id="mb" aria-label="Menu">☰</button><h1 id="ht">CubeLab</h1></div><nav id="nav" hidden></nav></header>
-<main id="app"></main>
-<div id="vw" hidden><div class="vc"><div class="sch"><b id="vt"></b><button class="mb" id="vx">✕ Close</button></div><canvas id="vcv" class="cb" width="600" height="600"></canvas><div id="vk"></div><div class="row tb"><button class="btn" id="v0">⏮</button><button class="btn" id="vb">◀</button><button class="btn pr" id="vp">▶ Play</button><button class="btn" id="vf">▶|</button><select id="vs"><option value=".6">0.6×</option><option value="1" selected>1×</option><option value="2">2×</option></select><button class="btn" id="vtop">Top view</button></div><p class="mu" style="text-align:center;margin-bottom:0">Drag the cube to look around.</p></div></div>
-<div id="sd" hidden><div class="vc"><div class="sch"><b id="sdt"></b><button class="mb" id="sdx">✕ Close</button></div><div class="mu" id="sdi"></div><code class="alg" id="sds" title="Tap to copy"></code><div id="sdp"></div><label class="mu" for="sdn">Description</label><textarea id="sdn" rows="3" placeholder="Add a note: what went wrong, ideas, how it felt…"></textarea><div class="row" style="margin-top:10px"><button class="mb" id="sd2">+2 penalty</button><button class="mb" id="sdd">DNF</button><button class="mb" id="sdu">↻ Use this scramble</button><button class="mb" id="sdr">🗑 Delete</button></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
-<script src="app.js"></script>
-</body></html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CubeLab – Rubik’s Cube 3×3 Toolkit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Top bar: the ☰ menu button, the title, and the page menu (nav is filled in by app.js) -->
+  <header>
+    <div class="hb">
+      <button id="mb" aria-label="Menu">☰</button>
+      <h1 id="ht">CubeLab</h1>
+    </div>
+    <nav id="nav" hidden></nav>
+  </header>
+
+  <!-- Every page is drawn into this element by app.js -->
+  <main id="app"></main>
+
+  <!-- Pop-up 1: the ▶ Watch player (3D cube that plays an algorithm) -->
+  <div id="vw" hidden>
+    <div class="vc">
+      <div class="sch">
+        <b id="vt"></b>
+        <button class="mb" id="vx">✕ Close</button>
+      </div>
+      <canvas id="vcv" class="cb" width="600" height="600"></canvas>
+      <div id="vk"></div>
+      <div class="row tb">
+        <button class="btn" id="v0">⏮</button>
+        <button class="btn" id="vb">◀</button>
+        <button class="btn pr" id="vp">▶ Play</button>
+        <button class="btn" id="vf">▶|</button>
+        <select id="vs">
+          <option value=".6">0.6×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+        </select>
+        <button class="btn" id="vtop">Top view</button>
+      </div>
+      <p class="mu" style="text-align:center;margin-bottom:0">Drag the cube to look around.</p>
+    </div>
+  </div>
+
+  <!-- Pop-up 2: one solve (scramble, note, +2 / DNF / use scramble / delete) -->
+  <div id="sd" hidden>
+    <div class="vc">
+      <div class="sch">
+        <b id="sdt"></b>
+        <button class="mb" id="sdx">✕ Close</button>
+      </div>
+      <div class="mu" id="sdi"></div>
+      <code class="alg" id="sds" title="Tap to copy"></code>
+      <div id="sdp"></div>
+      <label class="mu" for="sdn">Description</label>
+      <textarea id="sdn" rows="3" placeholder="Add a note: what went wrong, ideas, how it felt…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="mb" id="sd2">+2 penalty</button>
+        <button class="mb" id="sdd">DNF</button>
+        <button class="mb" id="sdu">↻ Use this scramble</button>
+        <button class="mb" id="sdr">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts: Supabase library (accounts), then your Supabase settings, then the app itself -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
